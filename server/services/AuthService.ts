@@ -19,12 +19,42 @@ interface AuthResult {
   data?: any;
   token?: string;
   userId?: number;
+  status?: string;
+}
+
+interface RecoveryCodeRecord {
+  userId: number;
+  email: string;
+  codeHash: string;
+  expiresAt: Date;
+  consumed: boolean;
+}
+
+interface RecoveryAttemptRecord {
+  failedAttempts: number;
+  lockoutUntil?: Date;
+}
+
+interface ManualRecoveryReviewCase {
+  caseId: string;
+  userId?: number;
+  emailHash: string;
+  reason: string;
+  status: "PENDING";
+  createdAt: Date;
 }
 
 export class AuthService {
   private tokenSecret: string;
   private tokenExpiry: string;
   private biometricData: Map<number, BiometricData> = new Map();
+  private recoveryCodesByHash: Map<string, RecoveryCodeRecord> = new Map();
+  private activeRecoveryCodeByUserId: Map<number, string> = new Map();
+  private recoveryAttemptsByIdentity: Map<string, RecoveryAttemptRecord> = new Map();
+  private manualRecoveryReviewQueue: ManualRecoveryReviewCase[] = [];
+  private readonly recoveryCodeExpiryMs = 15 * 60 * 1000;
+  private readonly recoveryLockoutMs = 15 * 60 * 1000;
+  private readonly maxRecoveryAttempts = 3;
 
   constructor() {
     // In a production environment, these should be loaded from environment variables
@@ -212,13 +242,24 @@ export class AuthService {
    * Generate a recovery code for account recovery
    */
   generateRecoveryCode(userId: number): string {
-    const code = randomBytes(16).toString('hex');
-    
-    // In a production environment, this would be stored in a database
-    // with an expiration time and associated with the user's account
-    // For demo purposes, we'll just log it
-    console.log(`Generated recovery code for user ${userId}: ${code}`);
-    
+    const code = randomBytes(16).toString("hex");
+    const codeHash = this.hashRecoveryCode(code);
+    const email = `user-${userId}@recovery.local`;
+    const currentCodeHash = this.activeRecoveryCodeByUserId.get(userId);
+
+    if (currentCodeHash) {
+      this.recoveryCodesByHash.delete(currentCodeHash);
+    }
+
+    this.recoveryCodesByHash.set(codeHash, {
+      userId,
+      email,
+      codeHash,
+      expiresAt: new Date(Date.now() + this.recoveryCodeExpiryMs),
+      consumed: false
+    });
+    this.activeRecoveryCodeByUserId.set(userId, codeHash);
+
     return code;
   }
 
@@ -227,17 +268,16 @@ export class AuthService {
    */
   async recoverAccount(recoveryCode: string, newBiometricData: string): Promise<{ success: boolean; token?: string; userId?: number; message?: string }> {
     try {
-      // In a real implementation, this would validate the recovery code against a database
-      // For demo purposes, we'll accept a test code
-      if (recoveryCode !== "test-recovery-code") {
+      const recoveryRecord = this.validateRecoveryCode(recoveryCode);
+
+      if (!recoveryRecord.valid || !recoveryRecord.record) {
         return { 
           success: false, 
-          message: "Invalid recovery code. Please check the code and try again." 
+          message: recoveryRecord.message || "Invalid recovery code. Please check the code and try again." 
         };
       }
-      
-      // For demo purposes, we'll use a fixed userId
-      const userId = 1;
+
+      const userId = recoveryRecord.record.userId;
       
       // Update biometric data
       const updated = await this.updateBiometricData(userId, newBiometricData);
@@ -251,6 +291,7 @@ export class AuthService {
       
       // Generate JWT for authenticated user
       const jwtToken = this.generateJwt(userId);
+      this.consumeRecoveryCode(recoveryRecord.record.codeHash);
       
       return {
         success: true,
@@ -275,7 +316,8 @@ export class AuthService {
     return [
       "biometric", 
       "nft", 
-      "recovery_code"
+      "recovery_code",
+      "idme_fallback"
     ];
   }
 
@@ -365,31 +407,56 @@ export class AuthService {
    */
   async recoveryCodeAuth(email: string, recoveryCode: string): Promise<AuthResult> {
     try {
-      // For demo purposes - in a real implementation, this would validate the recovery code
-      // against a database entry that's linked to the user's email
-      const demoEmail = "user@example.com";
-      const demoRecoveryCode = "test-recovery-code";
-      
-      if (email === demoEmail && recoveryCode === demoRecoveryCode) {
-        // Hardcoded user ID for demo
-        const userId = 1;
-        const token = this.generateJwt(userId);
-        
+      const normalizedEmail = email.trim().toLowerCase();
+      const identityKey = `recovery:${normalizedEmail}`;
+      const lockout = this.getLockoutStatus(identityKey);
+
+      if (lockout.lockedOut) {
         return {
-          success: true,
-          token,
-          userId,
-          data: {
-            token,
-            userId,
-            message: "Recovery code authentication successful"
-          }
+          success: false,
+          status: "LOCKED_OUT",
+          message: lockout.message
         };
       }
-      
-      return { 
-        success: false, 
-        message: "Invalid recovery code or email" 
+
+      const user = await storage.getUserByEmail(normalizedEmail);
+      if (!user) {
+        this.registerFailedRecoveryAttempt(identityKey);
+        return {
+          success: false,
+          status: "RECOVERY_FAILED",
+          message: "Invalid recovery credentials."
+        };
+      }
+
+      const validation = this.validateRecoveryCode(recoveryCode, user.id, normalizedEmail);
+      if (!validation.valid || !validation.record) {
+        this.registerFailedRecoveryAttempt(identityKey);
+        const noRecoveryPath = validation.reason === "MISSING_FOR_USER";
+
+        return {
+          success: false,
+          status: noRecoveryPath ? "BLOCKED_NO_RECOVERY_PATH" : "RECOVERY_FAILED",
+          message: noRecoveryPath
+            ? "No active recovery code found. Start ID.me fallback with /api/v1/auth/recovery-fallback."
+            : (validation.message || "Invalid recovery credentials.")
+        };
+      }
+
+      const token = this.generateJwt(user.id);
+      this.consumeRecoveryCode(validation.record.codeHash);
+      this.resetRecoveryAttempts(identityKey);
+
+      return {
+        success: true,
+        token,
+        userId: user.id,
+        data: {
+          token,
+          userId: user.id,
+          status: "RECOVERY_AUTHENTICATED",
+          message: "Recovery code authentication successful"
+        }
       };
     } catch (error) {
       console.error("Recovery code authentication error:", error);
@@ -398,5 +465,194 @@ export class AuthService {
         message: "Authentication failed due to system error" 
       };
     }
+  }
+
+  async requestRecoveryFallback(email: string, idMeAssertion?: string): Promise<AuthResult> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await storage.getUserByEmail(normalizedEmail);
+
+    if (!user) {
+      const reviewCase = this.enqueueManualRecoveryReview(normalizedEmail, "unmatched_email");
+      return {
+        success: false,
+        status: "MANUAL_REVIEW_REQUIRED",
+        message: "Unable to verify account automatically. Recovery is queued for manual review.",
+        data: { caseId: reviewCase.caseId, status: reviewCase.status }
+      };
+    }
+
+    if (!idMeAssertion) {
+      return {
+        success: false,
+        status: "IDME_REQUIRED",
+        message: "ID.me verification is required to recover without a device or recovery code."
+      };
+    }
+
+    const assertionValid = this.validateIdMeAssertion(idMeAssertion, normalizedEmail);
+    if (!assertionValid) {
+      const reviewCase = this.enqueueManualRecoveryReview(normalizedEmail, "idme_verification_failed", user.id);
+      return {
+        success: false,
+        status: "MANUAL_REVIEW_REQUIRED",
+        message: "ID.me verification did not pass. Recovery is queued for manual review.",
+        data: { caseId: reviewCase.caseId, status: reviewCase.status }
+      };
+    }
+
+    const recoveryCode = this.issueRecoveryCodeForUser(user.id, normalizedEmail);
+    this.resetRecoveryAttempts(`recovery:${normalizedEmail}`);
+
+    return {
+      success: true,
+      status: "FALLBACK_APPROVED",
+      message: "ID.me fallback approved. Use the issued recovery code to continue account recovery.",
+      data: {
+        status: "FALLBACK_APPROVED",
+        recoveryCode
+      }
+    };
+  }
+
+  private issueRecoveryCodeForUser(userId: number, email: string): string {
+    const code = randomBytes(16).toString("hex");
+    const codeHash = this.hashRecoveryCode(code);
+    const activeCodeHash = this.activeRecoveryCodeByUserId.get(userId);
+
+    if (activeCodeHash) {
+      this.recoveryCodesByHash.delete(activeCodeHash);
+    }
+
+    this.recoveryCodesByHash.set(codeHash, {
+      userId,
+      email,
+      codeHash,
+      expiresAt: new Date(Date.now() + this.recoveryCodeExpiryMs),
+      consumed: false
+    });
+    this.activeRecoveryCodeByUserId.set(userId, codeHash);
+
+    return code;
+  }
+
+  private hashRecoveryCode(recoveryCode: string): string {
+    return createHash("sha256").update(recoveryCode).digest("hex");
+  }
+
+  private validateRecoveryCode(recoveryCode: string, userId?: number, email?: string): {
+    valid: boolean;
+    reason?: "MISSING_FOR_USER" | "NOT_FOUND" | "CONSUMED" | "EXPIRED" | "MISMATCHED_USER";
+    message?: string;
+    record?: RecoveryCodeRecord;
+  } {
+    if (userId !== undefined) {
+      const userCodeHash = this.activeRecoveryCodeByUserId.get(userId);
+      if (!userCodeHash) {
+        return {
+          valid: false,
+          reason: "MISSING_FOR_USER",
+          message: "No active recovery code for this account."
+        };
+      }
+    }
+
+    const codeHash = this.hashRecoveryCode(recoveryCode);
+    const record = this.recoveryCodesByHash.get(codeHash);
+    if (!record) {
+      return { valid: false, reason: "NOT_FOUND", message: "Invalid recovery code." };
+    }
+
+    if (userId !== undefined && record.userId !== userId) {
+      return { valid: false, reason: "MISMATCHED_USER", message: "Recovery code does not match this account." };
+    }
+
+    if (email && record.email && record.email !== email) {
+      return { valid: false, reason: "MISMATCHED_USER", message: "Recovery code does not match this account." };
+    }
+
+    if (record.consumed) {
+      return { valid: false, reason: "CONSUMED", message: "Recovery code already used." };
+    }
+
+    if (record.expiresAt.getTime() <= Date.now()) {
+      return { valid: false, reason: "EXPIRED", message: "Recovery code expired. Start fallback again." };
+    }
+
+    return { valid: true, record };
+  }
+
+  private consumeRecoveryCode(codeHash: string): void {
+    const record = this.recoveryCodesByHash.get(codeHash);
+    if (!record) {
+      return;
+    }
+
+    this.recoveryCodesByHash.set(codeHash, {
+      ...record,
+      consumed: true
+    });
+    this.activeRecoveryCodeByUserId.delete(record.userId);
+  }
+
+  private getLockoutStatus(identityKey: string): { lockedOut: boolean; message?: string } {
+    const record = this.recoveryAttemptsByIdentity.get(identityKey);
+    if (!record?.lockoutUntil) {
+      return { lockedOut: false };
+    }
+
+    if (record.lockoutUntil.getTime() <= Date.now()) {
+      this.recoveryAttemptsByIdentity.set(identityKey, { failedAttempts: 0 });
+      return { lockedOut: false };
+    }
+
+    const remainingMs = record.lockoutUntil.getTime() - Date.now();
+    const remainingMin = Math.ceil(remainingMs / 60000);
+    return {
+      lockedOut: true,
+      message: `Recovery temporarily locked due to repeated failures. Try again in ${remainingMin} minute(s), or use ID.me fallback.`
+    };
+  }
+
+  private registerFailedRecoveryAttempt(identityKey: string): void {
+    const current = this.recoveryAttemptsByIdentity.get(identityKey) || { failedAttempts: 0 };
+    const failedAttempts = current.failedAttempts + 1;
+
+    if (failedAttempts >= this.maxRecoveryAttempts) {
+      this.recoveryAttemptsByIdentity.set(identityKey, {
+        failedAttempts,
+        lockoutUntil: new Date(Date.now() + this.recoveryLockoutMs)
+      });
+      return;
+    }
+
+    this.recoveryAttemptsByIdentity.set(identityKey, { failedAttempts });
+  }
+
+  private resetRecoveryAttempts(identityKey: string): void {
+    this.recoveryAttemptsByIdentity.delete(identityKey);
+  }
+
+  private validateIdMeAssertion(idMeAssertion: string, email: string): boolean {
+    const normalizedAssertion = idMeAssertion.trim();
+    if (!normalizedAssertion.startsWith("idme:")) {
+      return false;
+    }
+
+    const [, assertedEmail] = normalizedAssertion.split(":");
+    return assertedEmail?.trim().toLowerCase() === email;
+  }
+
+  private enqueueManualRecoveryReview(email: string, reason: string, userId?: number): ManualRecoveryReviewCase {
+    const emailHash = createHash("sha256").update(email).digest("hex");
+    const reviewCase: ManualRecoveryReviewCase = {
+      caseId: `mrr_${randomBytes(6).toString("hex")}`,
+      userId,
+      emailHash,
+      reason,
+      status: "PENDING",
+      createdAt: new Date()
+    };
+    this.manualRecoveryReviewQueue.push(reviewCase);
+    return reviewCase;
   }
 }

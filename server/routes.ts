@@ -153,12 +153,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!authResult.success) {
         return res.status(401).json({ 
           success: false, 
+          status: authResult.status,
           message: authResult.message || "Recovery code authentication failed" 
         });
       }
       
       res.json({
         success: true,
+        status: authResult.status || authResult.data?.status || "RECOVERY_AUTHENTICATED",
         message: "Recovery code authentication successful",
         token: authResult.token,
         userId: authResult.userId,
@@ -169,6 +171,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: "Server error during recovery code authentication" 
+      });
+    }
+  });
+
+  apiRouter.post("/auth/recovery-fallback", async (req, res) => {
+    try {
+      const { email, idMeAssertion } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required field: email"
+        });
+      }
+
+      const fallbackResult = await authService.requestRecoveryFallback(email, idMeAssertion);
+      if (!fallbackResult.success) {
+        const statusCode = fallbackResult.status === "MANUAL_REVIEW_REQUIRED" ? 202 : 401;
+        return res.status(statusCode).json({
+          success: false,
+          status: fallbackResult.status,
+          message: fallbackResult.message,
+          data: fallbackResult.data
+        });
+      }
+
+      res.json({
+        success: true,
+        status: fallbackResult.status,
+        message: fallbackResult.message,
+        data: fallbackResult.data
+      });
+    } catch (error) {
+      console.error("Error during recovery fallback:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error during recovery fallback"
       });
     }
   });

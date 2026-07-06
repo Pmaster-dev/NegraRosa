@@ -277,13 +277,50 @@ router.post('/recovery-code', async (req: Request, res: Response) => {
     const authResult = await authService.recoveryCodeAuth(email, recoveryCode);
     
     if (!authResult.success) {
-      return res.status(401).json({ message: authResult.message || 'Recovery code authentication failed' });
+      return res.status(401).json({
+        status: authResult.status,
+        message: authResult.message || 'Recovery code authentication failed'
+      });
     }
     
     res.json(authResult.data);
   } catch (error) {
     console.error('Recovery code authentication error:', error);
     res.status(500).json({ message: 'Server error during recovery code authentication' });
+  }
+});
+
+/**
+ * @route POST /api/v1/auth/recovery-fallback
+ * @desc Trigger fallback recovery via ID.me proof, with manual review fallback
+ * @access Public
+ */
+router.post('/recovery-fallback', async (req: Request, res: Response) => {
+  try {
+    const { email, idMeAssertion } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide email' });
+    }
+
+    const fallbackResult = await authService.requestRecoveryFallback(email, idMeAssertion);
+    if (!fallbackResult.success) {
+      const statusCode = fallbackResult.status === 'MANUAL_REVIEW_REQUIRED' ? 202 : 401;
+      return res.status(statusCode).json({
+        status: fallbackResult.status,
+        message: fallbackResult.message,
+        data: fallbackResult.data
+      });
+    }
+
+    res.json({
+      status: fallbackResult.status,
+      message: fallbackResult.message,
+      data: fallbackResult.data
+    });
+  } catch (error) {
+    console.error('Recovery fallback error:', error);
+    res.status(500).json({ message: 'Server error during recovery fallback' });
   }
 });
 
