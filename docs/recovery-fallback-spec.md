@@ -10,7 +10,7 @@ Provide a lean fallback path for users blocked by lost-device and no-recovery-co
 2. If no active code exists, API returns `BLOCKED_NO_RECOVERY_PATH`.
 3. User submits `/api/v1/auth/recovery-fallback` with:
    - `email`
-   - `idMeAssertion` (format: `idme:<email>`)
+   - `idMeAssertion` (format: `idme:v1:<email>:<issuedAtMs>:<nonceHex>:<hmacSha256Hex>`)
 4. If assertion validates, API returns `FALLBACK_APPROVED` and issues a short-lived recovery code.
 5. User completes recovery using issued code.
 

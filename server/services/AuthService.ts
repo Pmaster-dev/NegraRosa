@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { User, InsertUser } from "@shared/schema";
 import { randomBytes, createHash } from "crypto";
 import jwt from "jsonwebtoken";
+import { IdMeNodeVerifier } from "./IdMeNodeVerifier";
 
 // Biometric data interface - would include facial recognition data
 interface BiometricData {
@@ -52,6 +53,7 @@ export class AuthService {
   private activeRecoveryCodeByUserId: Map<number, string> = new Map();
   private recoveryAttemptsByIdentity: Map<string, RecoveryAttemptRecord> = new Map();
   private manualRecoveryReviewQueue: ManualRecoveryReviewCase[] = [];
+  private readonly idMeVerifier: IdMeNodeVerifier;
   private readonly recoveryCodeExpiryMs = 15 * 60 * 1000;
   private readonly recoveryLockoutMs = 15 * 60 * 1000;
   private readonly maxRecoveryAttempts = 3;
@@ -60,6 +62,7 @@ export class AuthService {
     // In a production environment, these should be loaded from environment variables
     this.tokenSecret = process.env.JWT_SECRET || "negrarosa-inclusive-security-framework-secret";
     this.tokenExpiry = "24h"; // Token expires in 24 hours
+    this.idMeVerifier = new IdMeNodeVerifier(process.env.IDME_NODE_SHARED_SECRET);
   }
 
   /**
@@ -633,13 +636,7 @@ export class AuthService {
   }
 
   private validateIdMeAssertion(idMeAssertion: string, email: string): boolean {
-    const normalizedAssertion = idMeAssertion.trim();
-    if (!normalizedAssertion.startsWith("idme:")) {
-      return false;
-    }
-
-    const [, assertedEmail] = normalizedAssertion.split(":");
-    return assertedEmail?.trim().toLowerCase() === email;
+    return this.idMeVerifier.validate(idMeAssertion, email);
   }
 
   private enqueueManualRecoveryReview(email: string, reason: string, userId?: number): ManualRecoveryReviewCase {

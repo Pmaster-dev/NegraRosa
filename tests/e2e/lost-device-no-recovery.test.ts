@@ -1,8 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { AuthService } from "../../server/services/AuthService";
+import { IdMeNodeVerifier } from "../../server/services/IdMeNodeVerifier";
+
+const testSecret = "test-idme-node-shared-secret";
+
+function signedAssertion(email: string): string {
+  return IdMeNodeVerifier.createAssertion(email, testSecret);
+}
 
 test("lost-device/no-recovery user can recover via ID.me fallback", async () => {
+  process.env.IDME_NODE_SHARED_SECRET = testSecret;
   const authService = new AuthService();
   const userId = 1;
 
@@ -13,7 +21,7 @@ test("lost-device/no-recovery user can recover via ID.me fallback", async () => 
   assert.equal(blocked.success, false);
   assert.equal(blocked.status, "BLOCKED_NO_RECOVERY_PATH");
 
-  const fallback = await authService.requestRecoveryFallback("test@example.com", "idme:test@example.com");
+  const fallback = await authService.requestRecoveryFallback("test@example.com", signedAssertion("test@example.com"));
   assert.equal(fallback.success, true);
   assert.ok(fallback.data?.recoveryCode);
 

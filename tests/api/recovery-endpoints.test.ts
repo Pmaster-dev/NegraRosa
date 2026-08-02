@@ -3,6 +3,13 @@ import assert from "node:assert/strict";
 import express from "express";
 import { AddressInfo } from "node:net";
 import authRouter from "../../server/api/v1/auth";
+import { IdMeNodeVerifier } from "../../server/services/IdMeNodeVerifier";
+
+const testSecret = "test-idme-node-shared-secret";
+
+function signedAssertion(email: string): string {
+  return IdMeNodeVerifier.createAssertion(email, testSecret);
+}
 
 async function startServer() {
   const app = express();
@@ -18,6 +25,7 @@ async function startServer() {
 }
 
 test("recovery API exposes blocked and fallback statuses", async (t) => {
+  process.env.IDME_NODE_SHARED_SECRET = testSecret;
   const { server, baseUrl } = await startServer();
   t.after(() => server.close());
 
@@ -42,7 +50,7 @@ test("recovery API exposes blocked and fallback statuses", async (t) => {
   const manual = await fetch(`${baseUrl}/api/v1/auth/recovery-fallback`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: "test@example.com", idMeAssertion: "idme:other@example.com" })
+    body: JSON.stringify({ email: "test@example.com", idMeAssertion: signedAssertion("other@example.com") })
   });
   assert.equal(manual.status, 202);
   const manualBody = await manual.json();

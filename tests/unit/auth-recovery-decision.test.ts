@@ -1,8 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { AuthService } from "../../server/services/AuthService";
+import { IdMeNodeVerifier } from "../../server/services/IdMeNodeVerifier";
+
+const testSecret = "test-idme-node-shared-secret";
+
+function signedAssertion(email: string): string {
+  return IdMeNodeVerifier.createAssertion(email, testSecret);
+}
 
 test("requires ID.me when no recovery code exists", async () => {
+  process.env.IDME_NODE_SHARED_SECRET = testSecret;
   const authService = new AuthService();
 
   const result = await authService.recoveryCodeAuth("test@example.com", "invalid-code");
@@ -11,9 +19,10 @@ test("requires ID.me when no recovery code exists", async () => {
 });
 
 test("approves fallback with valid ID.me assertion and authenticates with issued code", async () => {
+  process.env.IDME_NODE_SHARED_SECRET = testSecret;
   const authService = new AuthService();
 
-  const fallback = await authService.requestRecoveryFallback("test@example.com", "idme:test@example.com");
+  const fallback = await authService.requestRecoveryFallback("test@example.com", signedAssertion("test@example.com"));
   assert.equal(fallback.success, true);
   assert.equal(fallback.status, "FALLBACK_APPROVED");
   assert.ok(fallback.data?.recoveryCode);
@@ -24,8 +33,9 @@ test("approves fallback with valid ID.me assertion and authenticates with issued
 });
 
 test("locks recovery flow after repeated invalid attempts", async () => {
+  process.env.IDME_NODE_SHARED_SECRET = testSecret;
   const authService = new AuthService();
-  await authService.requestRecoveryFallback("test@example.com", "idme:test@example.com");
+  await authService.requestRecoveryFallback("test@example.com", signedAssertion("test@example.com"));
 
   await authService.recoveryCodeAuth("test@example.com", "wrong-1");
   await authService.recoveryCodeAuth("test@example.com", "wrong-2");
