@@ -1525,6 +1525,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Webhook CSV endpoints (must be defined before /webhooks/:id)
+  apiRouter.get("/webhooks/sample-csv", (req, res) => {
+    try {
+      const csvData = csvImportService.generateSampleCSV();
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=sample-webhooks.csv');
+      res.send(csvData);
+    } catch (error) {
+      console.error("Error generating sample CSV:", error);
+      res.status(500).json({ message: "Server error generating sample CSV" });
+    }
+  });
+
+  apiRouter.post("/webhooks/import-csv", async (req, res) => {
+    try {
+      const { csvData, userId } = req.body;
+
+      if (!csvData) {
+        return res.status(400).json({ message: "Missing CSV data" });
+      }
+
+      const defaultUserId = userId ? parseInt(userId) : 1;
+
+      const result = await csvImportService.importWebhooksFromCSV(csvData, defaultUserId);
+
+      res.json({
+        success: result.imported.length > 0,
+        imported: result.imported.length,
+        errors: result.errors
+      });
+    } catch (error) {
+      console.error("Error importing CSV:", error);
+      res.status(500).json({ message: "Server error importing CSV" });
+    }
+  });
+
+  apiRouter.get("/webhooks/export-csv", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+
+      // Get webhooks (direct lookup avoids N+1 user iteration loop)
+      const webhooks = userId
+        ? await storage.getWebhooksByUserId(userId)
+        : await storage.getAllWebhooks();
+
+      // Generate CSV
+      const header = 'id,name,url,event,userId,active,createdAt,updatedAt,lastTriggeredAt';
+      const rows = webhooks.map(webhook => [
+        webhook.id,
+        webhook.name,
+        webhook.url,
+        webhook.event,
+        webhook.userId,
+        webhook.active,
+        webhook.createdAt,
+        webhook.updatedAt,
+        webhook.lastTriggeredAt || ''
+      ].join(','));
+
+      const csvData = [header, ...rows].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=webhooks-export.csv');
+      res.send(csvData);
+    } catch (error) {
+      console.error("Error exporting webhooks to CSV:", error);
+      res.status(500).json({ message: "Server error exporting webhooks to CSV" });
+    }
+  });
+
   // Webhook management routes
   apiRouter.post("/users/:userId/webhooks", async (req, res) => {
     try {
@@ -1634,17 +1705,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
       
-      let webhooks = [];
-      if (userId) {
-        webhooks = await storage.getWebhooksByUserId(userId);
-      } else {
-        // Get all webhooks - in a real app, this would require admin permissions
-        const users = await storage.getAllUsers();
-        for (const user of users) {
-          const userWebhooks = await storage.getWebhooksByUserId(user.id);
-          webhooks.push(...userWebhooks);
-        }
-      }
+      // Direct lookup avoids N+1 user loop when querying all webhooks
+      const webhooks = userId
+        ? await storage.getWebhooksByUserId(userId)
+        : await storage.getAllWebhooks();
       
       res.json(webhooks);
     } catch (error) {
@@ -1839,20 +1903,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Import/Export endpoints
-  apiRouter.get("/webhooks/sample-csv", (req, res) => {
-    try {
-      const csvData = csvImportService.generateSampleCSV();
-      
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=sample-webhooks.csv');
-      res.send(csvData);
-    } catch (error) {
-      console.error("Error generating sample CSV:", error);
-      res.status(500).json({ message: "Server error generating sample CSV" });
-    }
-  });
-  
   // Background task management endpoints
   apiRouter.post("/background-tasks/start", (req, res) => {
     try {
@@ -1932,72 +1982,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing test webhook:", error);
       res.status(500).json({ message: "Server error processing test webhook" });
-    }
-  });
-  
-  apiRouter.post("/webhooks/import-csv", async (req, res) => {
-    try {
-      const { csvData, userId } = req.body;
-      
-      if (!csvData) {
-        return res.status(400).json({ message: "Missing CSV data" });
-      }
-      
-      const defaultUserId = userId ? parseInt(userId) : 1;
-      
-      const result = await csvImportService.importWebhooksFromCSV(csvData, defaultUserId);
-      
-      res.json({
-        success: result.imported.length > 0,
-        imported: result.imported.length,
-        errors: result.errors
-      });
-    } catch (error) {
-      console.error("Error importing CSV:", error);
-      res.status(500).json({ message: "Server error importing CSV" });
-    }
-  });
-  
-  apiRouter.get("/webhooks/export-csv", async (req, res) => {
-    try {
-      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-      
-      // Get webhooks
-      let webhooks = [];
-      if (userId) {
-        webhooks = await storage.getWebhooksByUserId(userId);
-      } else {
-        // Get all webhooks - in a real app, this would require admin permissions
-        // This is a simplification for our demo
-        const users = await storage.getAllUsers();
-        for (const user of users) {
-          const userWebhooks = await storage.getWebhooksByUserId(user.id);
-          webhooks.push(...userWebhooks);
-        }
-      }
-      
-      // Generate CSV
-      const header = 'id,name,url,event,userId,active,createdAt,updatedAt,lastTriggeredAt';
-      const rows = webhooks.map(webhook => [
-        webhook.id,
-        webhook.name,
-        webhook.url,
-        webhook.event,
-        webhook.userId,
-        webhook.active,
-        webhook.createdAt,
-        webhook.updatedAt,
-        webhook.lastTriggeredAt || ''
-      ].join(','));
-      
-      const csvData = [header, ...rows].join('\n');
-      
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=webhooks-export.csv');
-      res.send(csvData);
-    } catch (error) {
-      console.error("Error exporting webhooks to CSV:", error);
-      res.status(500).json({ message: "Server error exporting webhooks to CSV" });
     }
   });
 

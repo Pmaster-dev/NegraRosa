@@ -454,18 +454,10 @@ export class WebhookDataService {
     topErrors: string[];
   }> {
     try {
-      // Get all webhooks
-      let webhooks: Webhook[] = [];
-      if (options.userId) {
-        webhooks = await storage.getWebhooksByUserId(options.userId);
-      } else {
-        // Get all webhooks
-        const users = await storage.getAllUsers();
-        for (const user of users) {
-          const userWebhooks = await storage.getWebhooksByUserId(user.id);
-          webhooks.push(...userWebhooks);
-        }
-      }
+      // Get webhooks (direct lookup avoids N+1 user iteration loop)
+      let webhooks: Webhook[] = options.userId
+        ? await storage.getWebhooksByUserId(options.userId)
+        : await storage.getAllWebhooks();
       
       // Filter by event if specified
       if (options.event) {

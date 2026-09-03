@@ -184,6 +184,7 @@ export interface IStorage {
   createWebhook(webhook: InsertWebhook): Promise<Webhook>;
   getWebhook(id: string): Promise<Webhook | undefined>;
   getWebhooksByUserId(userId: number): Promise<Webhook[]>;
+  getAllWebhooks(): Promise<Webhook[]>;
   updateWebhook(id: string, updates: Partial<Webhook>): Promise<Webhook | undefined>;
   deleteWebhook(id: string): Promise<boolean>;
   
@@ -1308,6 +1309,11 @@ export class MemStorage implements IStorage {
   async getWebhooksByUserId(userId: number): Promise<Webhook[]> {
     return Array.from(this.webhooks.values())
       .filter(webhook => webhook.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  }
+
+  async getAllWebhooks(): Promise<Webhook[]> {
+    return Array.from(this.webhooks.values())
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
   }
 
