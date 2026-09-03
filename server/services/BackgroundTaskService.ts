@@ -233,14 +233,8 @@ export class BackgroundTaskService {
     try {
       console.log('Exporting webhook data...');
       
-      // Get all webhooks
-      const users = await storage.getAllUsers();
-      const allWebhooks = [];
-      
-      for (const user of users) {
-        const webhooks = await storage.getWebhooksByUserId(user.id);
-        allWebhooks.push(...webhooks);
-      }
+      // Get all webhooks (direct lookup avoids N+1 user iteration loop)
+      const allWebhooks = await storage.getAllWebhooks();
       
       if (allWebhooks.length === 0) {
         console.log('No webhooks to export.');
