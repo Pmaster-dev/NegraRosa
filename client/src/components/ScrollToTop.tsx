@@ -9,38 +9,50 @@ const ScrollToTop = ({ showBelow }: ScrollToTopProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Handle scroll events to determine when to show the button
+  // Handle scroll events with requestAnimationFrame throttling and passive listener for performance
   useEffect(() => {
+    let ticking = false;
+    let rafId: number | null = null;
+
     const checkScrollHeight = () => {
-      if (!showBelow) return;
-      
-      const scrollHeight = Math.max(
-        document.body.scrollHeight, 
-        document.documentElement.scrollHeight,
-        document.body.offsetHeight, 
-        document.documentElement.offsetHeight,
-        document.body.clientHeight, 
-        document.documentElement.clientHeight
-      );
-      
-      const windowHeight = window.innerHeight;
-      const scrollY = window.scrollY;
-      
-      // Calculate scroll progress percentage
-      const progress = Math.min(scrollY / (scrollHeight - windowHeight), 1);
-      setScrollProgress(progress * 100);
-      
-      // Determine if the scroll-to-top button should be visible
-      if (scrollY > showBelow) {
-        if (!isVisible) setIsVisible(true);
-      } else {
-        if (isVisible) setIsVisible(false);
+      try {
+        if (!showBelow) return;
+
+        const docEl = document.documentElement;
+        const scrollHeight = docEl.scrollHeight;
+        const windowHeight = window.innerHeight;
+        const scrollY = window.scrollY;
+
+        // Calculate scroll progress percentage as integer to avoid sub-pixel re-render spam
+        const maxScroll = scrollHeight - windowHeight;
+        const progress = maxScroll > 0 ? Math.min(Math.round((scrollY / maxScroll) * 100), 100) : 0;
+        setScrollProgress(prev => (prev !== progress ? progress : prev));
+
+        // Functional state update avoids re-subscribing scroll listener on visibility toggle
+        const shouldBeVisible = scrollY > showBelow;
+        setIsVisible(prev => (prev !== shouldBeVisible ? shouldBeVisible : prev));
+      } finally {
+        ticking = false;
       }
     };
 
-    window.addEventListener('scroll', checkScrollHeight);
-    return () => window.removeEventListener('scroll', checkScrollHeight);
-  }, [showBelow, isVisible]);
+    const onScroll = () => {
+      if (!ticking) {
+        rafId = window.requestAnimationFrame(checkScrollHeight);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    checkScrollHeight();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [showBelow]);
 
   // Scroll to top when clicking the button
   const scrollToTop = () => {
