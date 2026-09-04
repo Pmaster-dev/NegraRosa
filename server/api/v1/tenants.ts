@@ -36,8 +36,8 @@ router.get('/', auth0Service.checkJwt, auth0Service.checkPermissions(['read:tena
       },
       {
         id: "tenant-3",
-        name: "CIVIC Bridge",
-        description: "CIVIC integration for extended identity verification",
+        name: "ID Sec Bridge",
+        description: "ID Sec Foundation integration for decentralized identity verification",
         createdAt: new Date("2023-03-10T00:00:00Z"),
         owner: {
           id: 1,
@@ -119,19 +119,19 @@ router.get('/:id', auth0Service.checkJwt, auth0Service.checkTenantAccess(), asyn
       },
       "tenant-3": {
         id: "tenant-3",
-        name: "CIVIC Bridge",
-        description: "CIVIC integration for extended identity verification",
+        name: "ID Sec Bridge",
+        description: "ID Sec Foundation integration for decentralized identity verification",
         createdAt: new Date("2023-03-10T00:00:00Z"),
-        features: ["civic-integration", "blockchain-identity", "cross-platform-verification"],
+        features: ["idsec-integration", "blockchain-identity", "cross-platform-verification"],
         modules: [
-          { id: "civic-connect", name: "CIVIC Connection", active: true },
+          { id: "idsec-connect", name: "ID Sec Connection", active: true },
           { id: "identity-bridge", name: "Identity Bridge", active: true },
           { id: "verification-sync", name: "Verification Sync", active: true }
         ],
         branding: {
           primaryColor: "#3B82F6",
-          logo: "https://example.com/logos/civic-bridge.png",
-          companyName: "CIVIC Bridge"
+          logo: "https://example.com/logos/idsec-bridge.png",
+          companyName: "ID Sec Bridge"
         }
       }
     };
@@ -258,7 +258,7 @@ router.get('/:id/config', auth0Service.checkJwt, auth0Service.checkTenantAccess(
         }
       },
       "tenant-3": {
-        civicIntegration: {
+        idsecIntegration: {
           enabled: true,
           autosyncVerifications: true,
           allowExternalLogin: true
@@ -270,8 +270,8 @@ router.get('/:id/config', auth0Service.checkJwt, auth0Service.checkTenantAccess(
         },
         branding: {
           primaryColor: "#3B82F6",
-          companyName: "CIVIC Bridge",
-          customDomain: "bridge.civic-connect.com"
+          companyName: "ID Sec Bridge",
+          customDomain: "bridge.idsec-connect.com"
         }
       }
     };

@@ -14,35 +14,35 @@ router.get('/', (req, res) => {
   try {
     const partners = [
       {
-        id: 'vanuatu-compliance',
-        name: 'Vanuatu Compliance',
-        type: 'REGULATORY',
+        id: 'deafauth',
+        name: 'DeafAuth™ Biometric Passkeys',
+        type: 'ACCESSIBLE_AUTHENTICATION',
         status: 'ACTIVE',
-        description: 'Vanuatu regulatory compliance integration',
-        apiEndpoint: 'https://api.vanuatu-compliance.example.com',
-        documentationUrl: 'https://docs.vanuatu-compliance.example.com',
-        integrationDate: '2025-01-15T00:00:00.000Z',
+        description: 'WCAG 2.2 AAA Deaf-First visual sign gesture recognition & tactile haptic verification',
+        apiEndpoint: 'https://api.deafauth.io',
+        documentationUrl: 'https://docs.deafauth.io',
+        integrationDate: '2026-01-15T00:00:00.000Z',
         features: [
-          'Business entity verification',
-          'License validation',
-          'Compliance reporting',
-          'Regulatory updates'
+          'ASL/BSL sign gesture biometric vectors',
+          'Tactile haptic challenge-response 2FA',
+          'VRS/VRI video relay operator verification',
+          'Zero-knowledge gesture passkeys'
         ]
       },
       {
-        id: 'civic-id',
-        name: 'CIVIC Identity',
-        type: 'IDENTITY',
+        id: 'idme',
+        name: 'ID.me™ NIST IAL2 Bridge',
+        type: 'GOVERNMENT_IDENTITY',
         status: 'ACTIVE',
-        description: 'CIVIC identity verification integration',
-        apiEndpoint: 'https://api.civic.com',
-        documentationUrl: 'https://docs.civic.com',
-        integrationDate: '2024-12-10T00:00:00.000Z',
+        description: 'NIST SP 800-63-3 IAL2 and AAL2 identity proofing and credential federation',
+        apiEndpoint: 'https://api.id.me',
+        documentationUrl: 'https://docs.id.me',
+        integrationDate: '2026-02-10T00:00:00.000Z',
         features: [
-          'Identity verification',
-          'KYC/AML compliance',
-          'Document validation',
-          'Biometric verification'
+          'NIST IAL2 / AAL2 federal assurance level',
+          'Selfie liveness with Real-ID document OCR',
+          'IRS/State government credential proofing',
+          'Cryptographic DID binding'
         ]
       },
       {
@@ -101,48 +101,81 @@ router.get('/:id', (req, res) => {
   try {
     const partnerId = req.params.id;
     
-    // Mock partner data - in production, this would be fetched from a database
-    const partnerData = {
-      'vanuatu-compliance': {
-        id: 'vanuatu-compliance',
-        name: 'Vanuatu Compliance',
-        type: 'REGULATORY',
+    const partnerData: Record<string, any> = {
+      'deafauth': {
+        id: 'deafauth',
+        name: 'DeafAuth™ Biometric Passkeys',
+        type: 'ACCESSIBLE_AUTHENTICATION',
         status: 'ACTIVE',
-        description: 'Vanuatu regulatory compliance integration for offshore business operations',
-        apiEndpoint: 'https://api.vanuatu-compliance.example.com',
-        documentationUrl: 'https://docs.vanuatu-compliance.example.com',
-        integrationDate: '2025-01-15T00:00:00.000Z',
+        description: 'WCAG 2.2 AAA Deaf-First visual sign gesture recognition & tactile haptic verification',
+        apiEndpoint: 'https://api.deafauth.io',
+        documentationUrl: 'https://docs.deafauth.io',
+        integrationDate: '2026-01-15T00:00:00.000Z',
         features: [
-          'Business entity verification',
-          'License validation',
-          'Compliance reporting',
-          'Regulatory updates'
+          'ASL/BSL sign gesture biometric vectors',
+          'Tactile haptic challenge-response 2FA',
+          'VRS/VRI video relay operator verification',
+          'Zero-knowledge gesture passkeys'
         ],
         endpoints: [
           {
-            path: '/api/v1/vanuatu/credentials',
+            path: '/api/deafauth/register',
             method: 'POST',
-            description: 'Create compliance credential'
+            description: 'Enroll sign gesture passkey'
           },
           {
-            path: '/api/v1/vanuatu/credentials/:id',
-            method: 'GET',
-            description: 'Get compliance credential'
+            path: '/api/deafauth/verify',
+            method: 'POST',
+            description: 'Verify visual gesture vector'
           },
           {
-            path: '/api/v1/vanuatu/business-entities',
-            method: 'GET',
-            description: 'Get registered business entities'
+            path: '/api/deafauth/haptic-challenge',
+            method: 'POST',
+            description: 'Issue tactile rhythm challenge'
+          }
+        ],
+        configuration: {
+          apiKeyRequired: true,
+          webhookSupport: true,
+          realTimeVerification: true
+        },
+        metrics: {
+          uptime: 99.99,
+          averageResponseTime: 120,
+          dailyTransactions: 4850,
+          errorRate: 0.001
+        }
+      },
+      'idme': {
+        id: 'idme',
+        name: 'ID.me™ NIST IAL2 Bridge',
+        type: 'GOVERNMENT_IDENTITY',
+        status: 'ACTIVE',
+        description: 'NIST SP 800-63-3 IAL2 and AAL2 identity proofing and credential federation',
+        apiEndpoint: 'https://api.id.me',
+        documentationUrl: 'https://docs.id.me',
+        integrationDate: '2026-02-10T00:00:00.000Z',
+        features: [
+          'NIST IAL2 / AAL2 federal assurance level',
+          'Selfie liveness with Real-ID document OCR',
+          'IRS/State government credential proofing',
+          'Cryptographic DID binding'
+        ],
+        endpoints: [
+          {
+            path: '/api/idme/initiate',
+            method: 'POST',
+            description: 'Initiate NIST IAL2 session'
           },
           {
-            path: '/api/v1/vanuatu/licenses',
-            method: 'GET',
-            description: 'Get business licenses'
+            path: '/api/idme/verify',
+            method: 'POST',
+            description: 'Confirm identity verification'
           },
           {
-            path: '/api/v1/vanuatu/compliance-reports',
+            path: '/api/idme/status/:userId',
             method: 'GET',
-            description: 'Get compliance reports'
+            description: 'Check credential assurance status'
           }
         ],
         configuration: {
@@ -152,53 +185,9 @@ router.get('/:id', (req, res) => {
         },
         metrics: {
           uptime: 99.98,
-          averageResponseTime: 235, // ms
-          dailyTransactions: 1250,
-          errorRate: 0.02
-        }
-      },
-      'civic-id': {
-        id: 'civic-id',
-        name: 'CIVIC Identity',
-        type: 'IDENTITY',
-        status: 'ACTIVE',
-        description: 'CIVIC identity verification integration for secure KYC/AML compliance',
-        apiEndpoint: 'https://api.civic.com',
-        documentationUrl: 'https://docs.civic.com',
-        integrationDate: '2024-12-10T00:00:00.000Z',
-        features: [
-          'Identity verification',
-          'KYC/AML compliance',
-          'Document validation',
-          'Biometric verification'
-        ],
-        endpoints: [
-          {
-            path: '/api/v1/civic/verify',
-            method: 'POST',
-            description: 'Verify identity'
-          },
-          {
-            path: '/api/v1/civic/status/:id',
-            method: 'GET',
-            description: 'Check verification status'
-          },
-          {
-            path: '/api/v1/civic/documents',
-            method: 'POST',
-            description: 'Submit verification documents'
-          }
-        ],
-        configuration: {
-          apiKeyRequired: true,
-          webhookSupport: true,
-          realTimeVerification: true
-        },
-        metrics: {
-          uptime: 99.95,
-          averageResponseTime: 312, // ms
-          dailyTransactions: 2750,
-          errorRate: 0.01
+          averageResponseTime: 185,
+          dailyTransactions: 9200,
+          errorRate: 0.005
         }
       },
       'fibonrose-trust': {
@@ -206,7 +195,7 @@ router.get('/:id', (req, res) => {
         name: 'FibonRoseTRUST',
         type: 'TRUST_SCORING',
         status: 'ACTIVE',
-        description: 'Progressive trust building and scoring system based on the Fibonacci sequence',
+        description: 'Progressive trust building and scoring system based on multi-dimensional verification',
         apiEndpoint: 'https://api.fibonrose-trust.example.com',
         documentationUrl: 'https://docs.fibonrose-trust.example.com',
         integrationDate: '2024-11-05T00:00:00.000Z',
@@ -218,19 +207,14 @@ router.get('/:id', (req, res) => {
         ],
         endpoints: [
           {
-            path: '/api/v1/fibonrose-trust/score',
+            path: '/api/v1/fibonrose-trust/scores/:userId',
             method: 'GET',
-            description: 'Get trust score'
+            description: 'Get user trust score'
           },
           {
-            path: '/api/v1/fibonrose-trust/verification-paths',
+            path: '/api/v1/fibonrose-trust/factors/:userId',
             method: 'GET',
-            description: 'Get available verification paths'
-          },
-          {
-            path: '/api/v1/fibonrose-trust/recommendations',
-            method: 'GET',
-            description: 'Get trust improvement recommendations'
+            description: 'Get trust factors breakdown'
           }
         ],
         configuration: {
@@ -240,9 +224,9 @@ router.get('/:id', (req, res) => {
         },
         metrics: {
           uptime: 99.99,
-          averageResponseTime: 185, // ms
-          dailyTransactions: 5000,
-          errorRate: 0.005
+          averageResponseTime: 180,
+          dailyTransactions: 5400,
+          errorRate: 0.01
         }
       },
       'pinksync': {
@@ -250,7 +234,7 @@ router.get('/:id', (req, res) => {
         name: 'PinkSync',
         type: 'DATA_INTEGRATION',
         status: 'ACTIVE',
-        description: 'Data synchronization and integration platform for seamless API connections',
+        description: 'Data synchronization and integration platform for multi-source identity data',
         apiEndpoint: 'https://api.pinksync.example.com',
         documentationUrl: 'https://docs.pinksync.example.com',
         integrationDate: '2025-02-01T00:00:00.000Z',
@@ -262,19 +246,14 @@ router.get('/:id', (req, res) => {
         ],
         endpoints: [
           {
-            path: '/api/v1/pinksync/connections',
-            method: 'GET',
-            description: 'Get active connections'
-          },
-          {
             path: '/api/v1/pinksync/sync',
-            method: 'POST',
-            description: 'Trigger data synchronization'
+            method: 'GET',
+            description: 'Sync data with PinkSync'
           },
           {
             path: '/api/v1/pinksync/events',
-            method: 'GET',
-            description: 'Get synchronization events'
+            method: 'POST',
+            description: 'Send event to PinkSync'
           }
         ],
         configuration: {
@@ -284,9 +263,9 @@ router.get('/:id', (req, res) => {
         },
         metrics: {
           uptime: 99.93,
-          averageResponseTime: 205, // ms
-          dailyTransactions: 3500,
-          errorRate: 0.015
+          averageResponseTime: 215,
+          dailyTransactions: 3200,
+          errorRate: 0.03
         }
       }
     };
@@ -322,38 +301,37 @@ router.get('/:id/status', (req, res) => {
   try {
     const partnerId = req.params.id;
     
-    // Mock status data - in production, this would check actual integration statuses
-    const partnerStatuses = {
-      'vanuatu-compliance': {
+    const partnerStatuses: Record<string, any> = {
+      'deafauth': {
         operational: true,
         lastChecked: new Date().toISOString(),
-        responseTime: 230, // ms
+        responseTime: 115,
         incidents: [],
-        uptime: 99.97, // percentage
-        latencyHistory: [225, 235, 228, 240, 230, 227]
+        uptime: 99.99,
+        latencyHistory: [110, 118, 112, 120, 115, 114]
       },
-      'civic-id': {
+      'idme': {
         operational: true,
         lastChecked: new Date().toISOString(),
-        responseTime: 305, // ms
+        responseTime: 180,
         incidents: [],
-        uptime: 99.95, // percentage
-        latencyHistory: [310, 320, 300, 305, 315, 305]
+        uptime: 99.98,
+        latencyHistory: [175, 185, 180, 190, 182, 178]
       },
       'fibonrose-trust': {
         operational: true,
         lastChecked: new Date().toISOString(),
-        responseTime: 190, // ms
+        responseTime: 190,
         incidents: [],
-        uptime: 99.99, // percentage
+        uptime: 99.99,
         latencyHistory: [185, 195, 180, 200, 190, 190]
       },
       'pinksync': {
         operational: true,
         lastChecked: new Date().toISOString(),
-        responseTime: 210, // ms
+        responseTime: 210,
         incidents: [],
-        uptime: 99.93, // percentage
+        uptime: 99.93,
         latencyHistory: [215, 205, 220, 210, 205, 210]
       }
     };
@@ -396,7 +374,6 @@ router.post('/breadcrumbs', async (req, res) => {
       });
     }
     
-    // In a real implementation, this would be saved to a database
     const breadcrumb = {
       id: uuidv4(),
       userId,
@@ -439,22 +416,21 @@ router.get('/breadcrumbs', async (req, res) => {
       });
     }
     
-    // Mock breadcrumb data - in a real implementation, this would be fetched from a database
     const mockBreadcrumbs = [
       {
         id: '1',
         userId: userId,
-        partnerId: 'vanuatu-compliance',
-        action: 'CREDENTIAL_CHECK',
-        metadata: { entityId: '123', credentialType: 'BUSINESS_LICENSE' },
+        partnerId: 'deafauth',
+        action: 'SIGN_GESTURE_VERIFIED',
+        metadata: { standard: 'ASL', confidence: 0.98 },
         timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString()
       },
       {
         id: '2',
         userId: userId,
-        partnerId: 'civic-id',
-        action: 'IDENTITY_VERIFICATION',
-        metadata: { verificationId: '456', method: 'DOCUMENT' },
+        partnerId: 'idme',
+        action: 'NIST_IAL2_ASSURANCE',
+        metadata: { assuranceLevel: 'NIST_IAL2', status: 'VERIFIED' },
         timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString()
       },
       {
@@ -462,18 +438,16 @@ router.get('/breadcrumbs', async (req, res) => {
         userId: userId,
         partnerId: 'fibonrose-trust',
         action: 'TRUST_SCORE_CHECK',
-        metadata: { score: 85, tier: 'STANDARD' },
+        metadata: { score: 98, tier: 'TIER_3_ZERO_TRUST' },
         timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString()
       }
     ];
     
-    // Filter by partnerId if provided
     let filteredBreadcrumbs = mockBreadcrumbs;
     if (partnerId) {
       filteredBreadcrumbs = mockBreadcrumbs.filter(b => b.partnerId === partnerId);
     }
     
-    // Paginate results
     const paginatedBreadcrumbs = filteredBreadcrumbs.slice(offset, offset + limit);
     
     res.json({

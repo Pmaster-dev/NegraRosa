@@ -281,10 +281,10 @@ router.use('/fibonorse/authenticate', authLimiter);
 
 The PASETO service works alongside the existing AuthService and can be used in conjunction with:
 
-- Biometric authentication
-- NFT authentication
+- Biometric authentication (DeafAuth™ sign gestures & tactile haptics)
+- NFT & W3C DID authentication
 - Recovery code authentication
-- OAuth providers (Civic, Auth0)
+- Identity providers (ID.me NIST IAL2, Auth0)
 
 ## References
 

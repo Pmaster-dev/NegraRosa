@@ -30,14 +30,17 @@ export const verificationTypes = z.enum([
   "BUSINESS_EXPLANATION",
   "FINANCIAL_CONTEXT",
   "PERSONAL_REFERENCE",
-  // New financial service verification types
+  // Modern financial & identity verification types
   "BANK_ACCOUNT",
   "PAYMENT_METHOD",
   "TRANSACTION_HISTORY",
   "IDENTITY_VERIFICATION",
   "FINANCIAL_RISK_ASSESSMENT",
-  // External identity verification providers
-  "CIVIC",
+  // Sovereign identity & accessibility verification providers
+  "DEAF_AUTH",
+  "ID_ME",
+  "W3C_DID",
+  "ZKP_CREDENTIAL",
   "NFT"
 ]);
 
@@ -143,22 +146,22 @@ export const insertClaimSchema = createInsertSchema(claims).pick({
 });
 
 // Define types based on schemas
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
-export type InsertVerification = z.infer<typeof insertVerificationSchema>;
+export type InsertVerification = typeof verifications.$inferInsert;
 export type Verification = typeof verifications.$inferSelect;
 
-export type InsertReputation = z.infer<typeof insertReputationSchema>;
+export type InsertReputation = typeof reputations.$inferInsert;
 export type Reputation = typeof reputations.$inferSelect;
 
-export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type InsertTransaction = typeof transactions.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 
-export type InsertRiskAssessment = z.infer<typeof insertRiskAssessmentSchema>;
+export type InsertRiskAssessment = typeof riskAssessments.$inferInsert;
 export type RiskAssessment = typeof riskAssessments.$inferSelect;
 
-export type InsertClaim = z.infer<typeof insertClaimSchema>;
+export type InsertClaim = typeof claims.$inferInsert;
 export type Claim = typeof claims.$inferSelect;
 
 // Enums and other types for API responses
@@ -260,7 +263,7 @@ export const insertEntrepreneurProfileSchema = createInsertSchema(entrepreneurPr
   metricsData: true,
 });
 
-export type InsertEntrepreneurProfile = z.infer<typeof insertEntrepreneurProfileSchema>;
+export type InsertEntrepreneurProfile = typeof entrepreneurProfiles.$inferInsert;
 export type EntrepreneurProfile = typeof entrepreneurProfiles.$inferSelect;
 
 // JSON data upload records
@@ -285,7 +288,7 @@ export const insertJsonDataUploadSchema = createInsertSchema(jsonDataUploads).pi
   status: true,
 });
 
-export type InsertJsonDataUpload = z.infer<typeof insertJsonDataUploadSchema>;
+export type InsertJsonDataUpload = typeof jsonDataUploads.$inferInsert;
 export type JsonDataUpload = typeof jsonDataUploads.$inferSelect;
 
 // Job profiles and background verification
@@ -321,7 +324,7 @@ export const insertJobProfileSchema = createInsertSchema(jobProfiles).pick({
   personalStatement: true,
 });
 
-export type InsertJobProfile = z.infer<typeof insertJobProfileSchema>;
+export type InsertJobProfile = typeof jobProfiles.$inferInsert;
 export type JobProfile = typeof jobProfiles.$inferSelect;
 
 export const backgroundVerifications = pgTable("background_verifications", {
@@ -353,7 +356,7 @@ export const insertBackgroundVerificationSchema = createInsertSchema(backgroundV
   transparencyNotes: true,
 });
 
-export type InsertBackgroundVerification = z.infer<typeof insertBackgroundVerificationSchema>;
+export type InsertBackgroundVerification = typeof backgroundVerifications.$inferInsert;
 export type BackgroundVerification = typeof backgroundVerifications.$inferSelect;
 
 export const jobApplications = pgTable("job_applications", {
@@ -384,7 +387,7 @@ export const insertJobApplicationSchema = createInsertSchema(jobApplications).pi
   activitiesCompleted: true,
 });
 
-export type InsertJobApplication = z.infer<typeof insertJobApplicationSchema>;
+export type InsertJobApplication = typeof jobApplications.$inferInsert;
 export type JobApplication = typeof jobApplications.$inferSelect;
 
 // WHY System - Quick Submission Methods
@@ -418,7 +421,7 @@ export const insertWhySubmissionSchema = createInsertSchema(whySubmissions).pick
   facilitatorInfo: true,
 });
 
-export type InsertWhySubmission = z.infer<typeof insertWhySubmissionSchema>;
+export type InsertWhySubmission = typeof whySubmissions.$inferInsert;
 export type WhySubmission = typeof whySubmissions.$inferSelect;
 
 // WHY System - Notifications
@@ -442,7 +445,7 @@ export const insertWhyNotificationSchema = createInsertSchema(whyNotifications).
   status: true,
 });
 
-export type InsertWhyNotification = z.infer<typeof insertWhyNotificationSchema>;
+export type InsertWhyNotification = typeof whyNotifications.$inferInsert;
 export type WhyNotification = typeof whyNotifications.$inferSelect;
 
 // OAuth state for authentication flows
@@ -464,7 +467,7 @@ export const insertOAuthStateSchema = createInsertSchema(oauthStates).pick({
   expiresAt: true,
 });
 
-export type InsertOAuthState = z.infer<typeof insertOAuthStateSchema>;
+export type InsertOAuthState = typeof oauthStates.$inferInsert;
 export type OAuthState = typeof oauthStates.$inferSelect;
 
 // User tokens for third-party services
@@ -491,7 +494,7 @@ export const insertUserTokenSchema = createInsertSchema(userTokens).pick({
   scope: true,
 });
 
-export type InsertUserToken = z.infer<typeof insertUserTokenSchema>;
+export type InsertUserToken = typeof userTokens.$inferInsert;
 export type UserToken = typeof userTokens.$inferSelect;
 
 // External identities linked to users
@@ -513,7 +516,7 @@ export const insertExternalIdentitySchema = createInsertSchema(externalIdentitie
   data: true,
 });
 
-export type InsertExternalIdentity = z.infer<typeof insertExternalIdentitySchema>;
+export type InsertExternalIdentity = typeof externalIdentities.$inferInsert;
 export type ExternalIdentity = typeof externalIdentities.$inferSelect;
 
 // Verification requests
@@ -537,7 +540,7 @@ export const insertVerificationRequestSchema = createInsertSchema(verificationRe
   result: true,
 });
 
-export type InsertVerificationRequest = z.infer<typeof insertVerificationRequestSchema>;
+export type InsertVerificationRequest = typeof verificationRequests.$inferInsert;
 export type VerificationRequest = typeof verificationRequests.$inferSelect;
 
 // Webhook system
@@ -571,7 +574,7 @@ export const webhookPayloads = pgTable("webhook_payloads", {
   deliveryStatus: text("delivery_status").notNull().default("PENDING"), // PENDING, DELIVERED, FAILED
   responseCode: integer("response_code"),
   responseBody: text("response_body"),
-  notionEntryId: text("notion_entry_id"), // ID of the corresponding Notion database entry
+  signature: text("signature"), // HMAC-SHA256 signature for sovereign verification
   retryCount: integer("retry_count").default(0), // Count of delivery retry attempts
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
@@ -584,169 +587,189 @@ export const insertWebhookPayloadSchema = createInsertSchema(webhookPayloads).pi
   deliveryStatus: true,
   responseCode: true,
   responseBody: true,
-  notionEntryId: true,
+  signature: true,
   retryCount: true,
 });
 
-// Vanuatu Compliance - Integrated with Credentials System
-export const complianceCredentials = pgTable("compliance_credentials", {
+// ==========================================
+// ID SEC FOUNDATION - W3C DID & VC FRAMEWORK
+// ==========================================
+
+export const didDocuments = pgTable("did_documents", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  jurisdictionCode: text("jurisdiction_code").notNull(), // VANUATU, CAYMAN, BVI, etc.
-  credentialType: text("credential_type").notNull(), // ENTITY, LICENSE, COMPLIANCE_OFFICER
-  status: text("status").notNull(), // PENDING, ACTIVE, REVOKED, EXPIRED
-  issuedAt: timestamp("issued_at"),
-  expiresAt: timestamp("expires_at"),
-  metadata: jsonb("metadata"), // Jurisdiction-specific metadata
-  verificationHash: text("verification_hash"), // For blockchain verification
-  verifiableCredentialId: text("verifiable_credential_id"), // For W3C Verifiable Credentials
+  did: text("did").notNull().unique(), // did:negrarosa:0x..., did:key:z6M..., did:ion:...
+  method: text("method").notNull().default("negrarosa"), // negrarosa, key, ion, pkh
+  controller: text("controller").notNull(),
+  publicKeyMultibase: text("public_key_multibase").notNull(),
+  verificationMethodType: text("verification_method_type").notNull().default("Ed25519VerificationKey2020"),
+  authenticationEndpoints: jsonb("authentication_endpoints"),
+  services: jsonb("services"),
+  status: text("status").notNull().default("ACTIVE"), // ACTIVE, DEACTIVATED, REVOKED
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertComplianceCredentialSchema = createInsertSchema(complianceCredentials).pick({
+export const insertDidDocumentSchema = createInsertSchema(didDocuments).pick({
   userId: true,
-  jurisdictionCode: true,
-  credentialType: true,
+  did: true,
+  method: true,
+  controller: true,
+  publicKeyMultibase: true,
+  verificationMethodType: true,
+  authenticationEndpoints: true,
+  services: true,
   status: true,
-  issuedAt: true,
-  expiresAt: true,
-  metadata: true,
-  verificationHash: true,
-  verifiableCredentialId: true,
 });
 
-// Vanuatu-specific compliance schema
-export const vanuatuEntities = pgTable("vanuatu_entities", {
+export const verifiableCredentials = pgTable("verifiable_credentials", {
   id: serial("id").primaryKey(),
-  credentialId: integer("credential_id").notNull().references(() => complianceCredentials.id),
-  entityType: text("entity_type").notNull(), // IBC, LIMITED, FOUNDATION
-  registrationNumber: text("registration_number").notNull(),
-  registeredName: text("registered_name").notNull(),
-  registrationDate: timestamp("registration_date"),
-  registeredAddress: text("registered_address"),
-  registeredAgentName: text("registered_agent_name"),
-  directorsData: jsonb("directors_data"), // JSON array of directors
-  shareholdersData: jsonb("shareholders_data"), // JSON array of shareholders
-  businessActivities: text("business_activities").array(),
-  annualFilingDueDate: timestamp("annual_filing_due_date"),
-  goodStandingStatus: boolean("good_standing_status").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertVanuatuEntitySchema = createInsertSchema(vanuatuEntities).pick({
-  credentialId: true,
-  entityType: true,
-  registrationNumber: true,
-  registeredName: true,
-  registrationDate: true,
-  registeredAddress: true,
-  registeredAgentName: true,
-  directorsData: true,
-  shareholdersData: true,
-  businessActivities: true,
-  annualFilingDueDate: true,
-  goodStandingStatus: true,
-});
-
-// Vanuatu Financial Licenses
-export const vanuatuLicenses = pgTable("vanuatu_licenses", {
-  id: serial("id").primaryKey(),
-  credentialId: integer("credential_id").notNull().references(() => complianceCredentials.id),
-  entityId: integer("entity_id").references(() => vanuatuEntities.id),
-  licenseType: text("license_type").notNull(), // DEALER, BANKING, SECURITIES, INSURANCE
-  licenseNumber: text("license_number").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  holderDid: text("holder_did").notNull(),
+  issuerDid: text("issuer_did").notNull(),
+  credentialType: text("credential_type").notNull(), // IdentityCredential, DeafAuthPasskey, IdMeAssurance, BusinessGoodStanding
+  claimSubject: jsonb("claim_subject").notNull(),
+  proofSignature: text("proof_signature").notNull(),
+  zkpCommitment: text("zkp_commitment"),
   issuanceDate: timestamp("issuance_date").notNull(),
-  expiryDate: timestamp("expiry_date"),
-  activityScope: text("activity_scope").array(),
-  restrictionNotes: text("restriction_notes"),
-  regulatoryContactEmail: text("regulatory_contact_email"),
-  complianceOfficerId: integer("compliance_officer_id").references(() => users.id),
-  annualFeeAmount: real("annual_fee_amount"),
-  lastFeePaymentDate: timestamp("last_fee_payment_date"),
+  expirationDate: timestamp("expiration_date"),
+  status: text("status").notNull().default("VALID"), // VALID, REVOKED, SUSPENDED
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertVanuatuLicenseSchema = createInsertSchema(vanuatuLicenses).pick({
-  credentialId: true,
-  entityId: true,
-  licenseType: true,
-  licenseNumber: true,
+export const insertVerifiableCredentialSchema = createInsertSchema(verifiableCredentials).pick({
+  userId: true,
+  holderDid: true,
+  issuerDid: true,
+  credentialType: true,
+  claimSubject: true,
+  proofSignature: true,
+  zkpCommitment: true,
   issuanceDate: true,
-  expiryDate: true,
-  activityScope: true,
-  restrictionNotes: true,
-  regulatoryContactEmail: true,
-  complianceOfficerId: true,
-  annualFeeAmount: true,
-  lastFeePaymentDate: true,
-});
-
-// Vanuatu Compliance Reports
-export const complianceReports = pgTable("compliance_reports", {
-  id: serial("id").primaryKey(),
-  entityId: integer("entity_id").references(() => vanuatuEntities.id),
-  licenseId: integer("license_id").references(() => vanuatuLicenses.id),
-  reportType: text("report_type").notNull(), // ANNUAL_RETURN, KYC_AUDIT, AML_REPORT
-  reportPeriodStart: timestamp("report_period_start"),
-  reportPeriodEnd: timestamp("report_period_end"),
-  filingDate: timestamp("filing_date"),
-  status: text("status").notNull(), // DRAFT, SUBMITTED, ACCEPTED, REJECTED
-  submissionReference: text("submission_reference"),
-  reportContent: jsonb("report_content"),
-  attachments: jsonb("attachments"), // URLs to supporting documents
-  submittedBy: integer("submitted_by").references(() => users.id),
-  reviewedBy: integer("reviewed_by").references(() => users.id),
-  reviewNotes: text("review_notes"),
-  webhookNotificationSent: boolean("webhook_notification_sent").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertComplianceReportSchema = createInsertSchema(complianceReports).pick({
-  entityId: true,
-  licenseId: true,
-  reportType: true,
-  reportPeriodStart: true,
-  reportPeriodEnd: true,
-  filingDate: true,
+  expirationDate: true,
   status: true,
-  submissionReference: true,
-  reportContent: true,
-  attachments: true,
-  submittedBy: true,
-  reviewedBy: true,
-  reviewNotes: true,
-  webhookNotificationSent: true,
 });
 
-// New compliance verification events for webhooks
+// ==========================================
+// DEAFAUTH™ - ACCESSIBLE BIOMETRIC & GESTURE AUTH
+// ==========================================
+
+export const deafAuthCredentials = pgTable("deaf_auth_credentials", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  gestureProfileName: text("gesture_profile_name").notNull(), // e.g. "Primary ASL Security Passkey"
+  signLanguageStandard: text("sign_language_standard").notNull().default("ASL"), // ASL, BSL, LSF, IS
+  gestureKeyHash: text("gesture_key_hash").notNull(),
+  visualConfidenceScore: real("visual_confidence_score").notNull().default(0.95),
+  hapticPatternCode: text("haptic_pattern_code").notNull().default("PULSE-100-50-200"),
+  videoRelayVerified: boolean("video_relay_verified").default(false),
+  relayOperatorId: text("relay_operator_id"),
+  passkeyStatus: text("passkey_status").notNull().default("ACTIVE"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+});
+
+export const insertDeafAuthCredentialSchema = createInsertSchema(deafAuthCredentials).pick({
+  userId: true,
+  gestureProfileName: true,
+  signLanguageStandard: true,
+  gestureKeyHash: true,
+  visualConfidenceScore: true,
+  hapticPatternCode: true,
+  videoRelayVerified: true,
+  relayOperatorId: true,
+  passkeyStatus: true,
+});
+
+// ==========================================
+// ID.ME™ - NIST IAL2/AAL2 VERIFICATION BRIDGE
+// ==========================================
+
+export const idMeVerifications = pgTable("id_me_verifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  idMeUuid: text("id_me_uuid").notNull().unique(),
+  assuranceLevel: text("assurance_level").notNull().default("NIST_IAL2"), // NIST_IAL2, NIST_IAL1, AAL2, AAL3
+  verificationChannel: text("verification_channel").notNull().default("ONLINE_SELF_SERVICE"), // ONLINE_SELF_SERVICE, VIDEO_AGENT_ASSISTED, IN_PERSON
+  verifiedAttributes: jsonb("verified_attributes").notNull(), // { firstName, lastName, dob, address, stateId, militaryStatus, studentStatus }
+  livenessScore: real("liveness_score").default(0.99),
+  documentType: text("document_type").notNull().default("DRIVERS_LICENSE"), // DRIVERS_LICENSE, PASSPORT, MILITARY_ID, STATE_ID
+  verificationStatus: text("verification_status").notNull().default("VERIFIED"), // PENDING, VERIFIED, EXPIRED, REQUIRES_MANUAL_REVIEW
+  issuedAt: timestamp("issued_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
+  didBinding: text("did_binding"), // Bound W3C DID
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertIdMeVerificationSchema = createInsertSchema(idMeVerifications).pick({
+  userId: true,
+  idMeUuid: true,
+  assuranceLevel: true,
+  verificationChannel: true,
+  verifiedAttributes: true,
+  livenessScore: true,
+  documentType: true,
+  verificationStatus: true,
+  expiresAt: true,
+  didBinding: true,
+});
+
+// ==========================================
+// ID SEC FOUNDATION - AUDIT LOGS & ZERO TRUST
+// ==========================================
+
+export const securityAuditLogs = pgTable("security_audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  eventType: text("event_type").notNull(), // DEAF_AUTH_SIGN_IN, ID_ME_IAL2_SYNC, DID_PRESENTATION_VERIFIED, ZERO_TRUST_EVALUATION
+  sourceIp: text("source_ip").default("127.0.0.1"),
+  userAgent: text("user_agent"),
+  threatLevel: text("threat_level").notNull().default("LOW"), // LOW, MEDIUM, HIGH, CRITICAL
+  cryptographicHash: text("cryptographic_hash").notNull(),
+  actionResult: text("action_result").notNull().default("SUCCESS"), // SUCCESS, CHALLENGED, BLOCKED
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSecurityAuditLogSchema = createInsertSchema(securityAuditLogs).pick({
+  userId: true,
+  eventType: true,
+  sourceIp: true,
+  userAgent: true,
+  threatLevel: true,
+  cryptographicHash: true,
+  actionResult: true,
+  metadata: true,
+});
+
+// Verification events for webhooks & event dispatcher
 export const verificationEvents = [
   ...verificationTypes.options,
-  "VANUATU_ENTITY_VERIFICATION",
-  "VANUATU_LICENSE_VERIFICATION",
-  "VANUATU_ANNUAL_COMPLIANCE",
-  "VANUATU_AML_VERIFICATION",
-  "VANUATU_KYC_AUDIT",
+  "DEAF_AUTH_GESTURE_VERIFIED",
+  "ID_ME_IAL2_CONFIRMED",
+  "W3C_DID_RESOLVED",
+  "ZKP_CREDENTIAL_ISSUED",
+  "ZERO_TRUST_AUDIT_LOG",
 ] as const;
 
 export const extendedVerificationTypes = z.enum(verificationEvents);
 export type ExtendedVerificationType = z.infer<typeof extendedVerificationTypes>;
 
 // Export types
-export type InsertComplianceCredential = z.infer<typeof insertComplianceCredentialSchema>;
-export type ComplianceCredential = typeof complianceCredentials.$inferSelect;
+export type InsertDidDocument = typeof didDocuments.$inferInsert;
+export type DidDocument = typeof didDocuments.$inferSelect;
 
-export type InsertVanuatuEntity = z.infer<typeof insertVanuatuEntitySchema>;
-export type VanuatuEntity = typeof vanuatuEntities.$inferSelect;
+export type InsertVerifiableCredential = typeof verifiableCredentials.$inferInsert;
+export type VerifiableCredential = typeof verifiableCredentials.$inferSelect;
 
-export type InsertVanuatuLicense = z.infer<typeof insertVanuatuLicenseSchema>;
-export type VanuatuLicense = typeof vanuatuLicenses.$inferSelect;
+export type InsertDeafAuthCredential = typeof deafAuthCredentials.$inferInsert;
+export type DeafAuthCredential = typeof deafAuthCredentials.$inferSelect;
 
-export type InsertComplianceReport = z.infer<typeof insertComplianceReportSchema>;
-export type ComplianceReport = typeof complianceReports.$inferSelect;
+export type InsertIdMeVerification = typeof idMeVerifications.$inferInsert;
+export type IdMeVerification = typeof idMeVerifications.$inferSelect;
+
+export type InsertSecurityAuditLog = typeof securityAuditLogs.$inferInsert;
+export type SecurityAuditLog = typeof securityAuditLogs.$inferSelect;
 
 // Finance/Tax/Insurance Module schemas
 export const financialTransactions = pgTable("financial_transactions", {
@@ -1038,36 +1061,36 @@ export const insertZkpCreditProofSchema = createInsertSchema(zkpCreditProofs).pi
   createdBy: true
 });
 
-export type InsertWebhook = z.infer<typeof insertWebhookSchema>;
+export type InsertWebhook = typeof webhooks.$inferInsert;
 export type Webhook = typeof webhooks.$inferSelect;
 
-export type InsertWebhookPayload = z.infer<typeof insertWebhookPayloadSchema>;
+export type InsertWebhookPayload = typeof webhookPayloads.$inferInsert;
 export type WebhookPayload = typeof webhookPayloads.$inferSelect;
 
 // Domain-Specific Module types
-export type InsertFinancialTransaction = z.infer<typeof insertFinancialTransactionSchema>;
+export type InsertFinancialTransaction = typeof financialTransactions.$inferInsert;
 export type FinancialTransaction = typeof financialTransactions.$inferSelect;
 
-export type InsertApiFirewallLog = z.infer<typeof insertApiFirewallLogSchema>;
+export type InsertApiFirewallLog = typeof apiFirewallLogs.$inferInsert;
 export type ApiFirewallLog = typeof apiFirewallLogs.$inferSelect;
 
-export type InsertInsurancePolicy = z.infer<typeof insertInsurancePolicySchema>;
+export type InsertInsurancePolicy = typeof insurancePolicies.$inferInsert;
 export type InsurancePolicy = typeof insurancePolicies.$inferSelect;
 
-export type InsertPropertyDocument = z.infer<typeof insertPropertyDocumentSchema>;
+export type InsertPropertyDocument = typeof propertyDocuments.$inferInsert;
 export type PropertyDocument = typeof propertyDocuments.$inferSelect;
 
-export type InsertPropertyTag = z.infer<typeof insertPropertyTagSchema>;
+export type InsertPropertyTag = typeof propertyTags.$inferInsert;
 export type PropertyTag = typeof propertyTags.$inferSelect;
 
-export type InsertPropertyVerification = z.infer<typeof insertPropertyVerificationSchema>;
+export type InsertPropertyVerification = typeof propertyVerifications.$inferInsert;
 export type PropertyVerification = typeof propertyVerifications.$inferSelect;
 
-export type InsertBusinessCreditProfile = z.infer<typeof insertBusinessCreditProfileSchema>;
+export type InsertBusinessCreditProfile = typeof businessCreditProfiles.$inferInsert;
 export type BusinessCreditProfile = typeof businessCreditProfiles.$inferSelect;
 
-export type InsertCreditEnrichmentLog = z.infer<typeof insertCreditEnrichmentLogSchema>;
+export type InsertCreditEnrichmentLog = typeof creditEnrichmentLogs.$inferInsert;
 export type CreditEnrichmentLog = typeof creditEnrichmentLogs.$inferSelect;
 
-export type InsertZkpCreditProof = z.infer<typeof insertZkpCreditProofSchema>;
+export type InsertZkpCreditProof = typeof zkpCreditProofs.$inferInsert;
 export type ZkpCreditProof = typeof zkpCreditProofs.$inferSelect;

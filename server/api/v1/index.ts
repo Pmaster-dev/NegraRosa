@@ -4,7 +4,7 @@ import usersRouter from './users';
 import webhooksRouter from './webhooks';
 import verificationRouter from './verification';
 import fibonRoseTrustRouter from './fibonRoseTrust';
-import vanuatuRouter from './vanuatu';
+import idSecRouter from './idsec';
 import tenantsRouter from './tenants';
 import securityRouter from './security';
 import partnersRouter from './partners';
@@ -19,7 +19,7 @@ router.use('/users', usersRouter);
 router.use('/verification', verificationRouter);
 router.use('/webhooks', webhooksRouter);
 router.use('/fibonrose-trust', fibonRoseTrustRouter);
-router.use('/vanuatu', vanuatuRouter);
+router.use('/idsec', idSecRouter);
 router.use('/tenants', tenantsRouter);
 
 // Mount new security, partners, and opensource routes

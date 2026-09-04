@@ -1,32 +1,24 @@
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { VanuatuComplianceService } from "./services/VanuatuComplianceService";
-import { civicService } from "./services/CivicService";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Initialize Vanuatu Compliance service
-if (!process.env.VANUATU_API_KEY) {
-  console.log('Vanuatu Compliance service not fully configured. Missing: VANUATU_API_KEY');
-} else {
-  const vanuatuService = new VanuatuComplianceService();
-  console.log('Vanuatu Compliance service initialized');
-}
-
-// The CivicService is already initialized as a singleton when imported
+console.log('ID Sec Foundation™ Mainframe initialized: DeafAuth, ID.me, and W3C DID engines active');
 
 // Configure global webhook registration URL for services
 const redirectDomain = process.env.REDIRECT_DOMAIN || 'negrarosa.mbtquniverse.com';
 
 // Define webhook registration URLs
 app.locals.webhookConfig = {
-  vanuatuCallback: `https://${redirectDomain}/api/v1/vanuatu/callback`,
-  vanuatuWebhook: `https://${redirectDomain}/api/v1/vanuatu/webhook`,
-  civicCallback: `https://${redirectDomain}/api/v1/auth/civic/callback`,
-  generalWebhook: `https://${redirectDomain}/api/v1/webhooks/receive`
+  deafAuthCallback: `https://${redirectDomain}/api/deafauth/verify`,
+  idMeCallback: `https://${redirectDomain}/api/idme/verify`,
+  didWebhook: `https://${redirectDomain}/api/did/verify-presentation`,
+  generalWebhook: `https://${redirectDomain}/api/webhooks/test-process`
 };
 
 app.use((req, res, next) => {
@@ -73,21 +65,14 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  if (process.env.NODE_ENV !== "production") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
 })();

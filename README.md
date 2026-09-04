@@ -80,7 +80,7 @@ For detailed information, see [agents.md](./agents.md#security-pillars-framework
 - **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: Paseto v4, Passport.js
 - **Blockchain**: Ethereum (for NFT verification)
-- **Integrations**: Stripe, Plaid, Auth0, Civic, OpenAI, Anthropic
+- **Integrations**: DeafAuth™, ID.me™ (NIST IAL2), Stripe, Plaid, Auth0, W3C DIDs, OpenAI, Anthropic
 
 ## Development
 

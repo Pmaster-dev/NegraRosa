@@ -15,10 +15,11 @@ import {
   Webhook, InsertWebhook,
   WebhookPayload, InsertWebhookPayload,
   VerificationType,
-  ComplianceCredential, InsertComplianceCredential,
-  VanuatuEntity, InsertVanuatuEntity,
-  VanuatuLicense, InsertVanuatuLicense,
-  ComplianceReport, InsertComplianceReport,
+  DidDocument, InsertDidDocument,
+  VerifiableCredential, InsertVerifiableCredential,
+  DeafAuthCredential, InsertDeafAuthCredential,
+  IdMeVerification, InsertIdMeVerification,
+  SecurityAuditLog, InsertSecurityAuditLog,
   // OAuth and External Identity types
   OAuthState, InsertOAuthState,
   UserToken, InsertUserToken,
@@ -193,38 +194,39 @@ export interface IStorage {
   getWebhookPayloadsByStatus(status: string): Promise<WebhookPayload[]>;
   getWebhookPayloadsByIds(ids: string[]): Promise<WebhookPayload[]>;
   updateWebhookPayloadStatus(id: string, status: string, responseCode?: number | null, responseBody?: string): Promise<WebhookPayload | undefined>;
-  updateWebhookPayloadNotionId(id: string, notionEntryId: string): Promise<WebhookPayload | undefined>;
   updateWebhookPayloadRetryCount(id: string, retryCount: number): Promise<WebhookPayload | undefined>;
   
-  // Vanuatu Compliance - Credentials
-  createComplianceCredential(credential: InsertComplianceCredential): Promise<ComplianceCredential>;
-  getComplianceCredential(id: number): Promise<ComplianceCredential | undefined>;
-  getComplianceCredentialsByUserId(userId: number): Promise<ComplianceCredential[]>;
-  getComplianceCredentialsByJurisdiction(jurisdictionCode: string): Promise<ComplianceCredential[]>;
-  updateComplianceCredential(id: number, updates: Partial<ComplianceCredential>): Promise<ComplianceCredential | undefined>;
+  // W3C DID Management
+  createDidDocument(doc: InsertDidDocument): Promise<DidDocument>;
+  getDidDocument(id: number): Promise<DidDocument | undefined>;
+  getDidDocumentByDid(did: string): Promise<DidDocument | undefined>;
+  getDidDocumentsByUserId(userId: number): Promise<DidDocument[]>;
+  updateDidDocument(id: number, updates: Partial<DidDocument>): Promise<DidDocument | undefined>;
   
-  // Vanuatu Entities
-  createVanuatuEntity(entity: InsertVanuatuEntity): Promise<VanuatuEntity>;
-  getVanuatuEntity(id: number): Promise<VanuatuEntity | undefined>;
-  getVanuatuEntitiesByCredentialId(credentialId: number): Promise<VanuatuEntity[]>;
-  getVanuatuEntitiesWithUpcomingFilings(daysThreshold: number): Promise<VanuatuEntity[]>;
-  updateVanuatuEntity(id: number, updates: Partial<VanuatuEntity>): Promise<VanuatuEntity | undefined>;
+  // Verifiable Credentials
+  createVerifiableCredential(vc: InsertVerifiableCredential): Promise<VerifiableCredential>;
+  getVerifiableCredential(id: number): Promise<VerifiableCredential | undefined>;
+  getVerifiableCredentialsByUserId(userId: number): Promise<VerifiableCredential[]>;
+  getVerifiableCredentialsByHolderDid(holderDid: string): Promise<VerifiableCredential[]>;
+  updateVerifiableCredentialStatus(id: number, status: string): Promise<VerifiableCredential | undefined>;
   
-  // Vanuatu Licenses
-  createVanuatuLicense(license: InsertVanuatuLicense): Promise<VanuatuLicense>;
-  getVanuatuLicense(id: number): Promise<VanuatuLicense | undefined>;
-  getVanuatuLicensesByEntityId(entityId: number): Promise<VanuatuLicense[]>;
-  getVanuatuLicensesByCredentialId(credentialId: number): Promise<VanuatuLicense[]>;
-  getVanuatuLicensesNearingExpiration(daysThreshold: number): Promise<VanuatuLicense[]>;
-  updateVanuatuLicense(id: number, updates: Partial<VanuatuLicense>): Promise<VanuatuLicense | undefined>;
+  // DeafAuth™ System
+  createDeafAuthCredential(cred: InsertDeafAuthCredential): Promise<DeafAuthCredential>;
+  getDeafAuthCredential(id: number): Promise<DeafAuthCredential | undefined>;
+  getDeafAuthCredentialsByUserId(userId: number): Promise<DeafAuthCredential[]>;
+  updateDeafAuthUsage(id: number): Promise<DeafAuthCredential | undefined>;
   
-  // Compliance Reports
-  createComplianceReport(report: InsertComplianceReport): Promise<ComplianceReport>;
-  getComplianceReport(id: number): Promise<ComplianceReport | undefined>;
-  getComplianceReportsByEntityId(entityId: number): Promise<ComplianceReport[]>;
-  getComplianceReportsByLicenseId(licenseId: number): Promise<ComplianceReport[]>;
-  updateComplianceReport(id: number, updates: Partial<ComplianceReport>): Promise<ComplianceReport | undefined>;
-  updateComplianceReportWebhookStatus(id: number, sent: boolean): Promise<ComplianceReport | undefined>;
+  // ID.me™ Verification Bridge
+  createIdMeVerification(verif: InsertIdMeVerification): Promise<IdMeVerification>;
+  getIdMeVerification(id: number): Promise<IdMeVerification | undefined>;
+  getIdMeVerificationsByUserId(userId: number): Promise<IdMeVerification[]>;
+  getIdMeVerificationByUuid(uuid: string): Promise<IdMeVerification | undefined>;
+  updateIdMeVerification(id: number, updates: Partial<IdMeVerification>): Promise<IdMeVerification | undefined>;
+  
+  // ID Sec Foundation - Audit Logs
+  createSecurityAuditLog(log: InsertSecurityAuditLog): Promise<SecurityAuditLog>;
+  getSecurityAuditLogs(limit?: number): Promise<SecurityAuditLog[]>;
+  getSecurityAuditLogsByUserId(userId: number): Promise<SecurityAuditLog[]>;
   
   // Finance/Tax/Insurance Module
   createFinancialTransaction(transaction: InsertFinancialTransaction): Promise<FinancialTransaction>;
@@ -308,11 +310,14 @@ export class MemStorage implements IStorage {
   private externalIdentitiesByProviderId: Map<string, ExternalIdentity>;
   private verificationRequests: Map<string, VerificationRequest>;
   
-  // Vanuatu compliance maps
-  private complianceCredentials: Map<number, ComplianceCredential>;
-  private vanuatuEntities: Map<number, VanuatuEntity>;
-  private vanuatuLicenses: Map<number, VanuatuLicense>;
-  private complianceReports: Map<number, ComplianceReport>;
+  // ID Sec Foundation maps
+  private didDocuments: Map<number, DidDocument>;
+  private didDocumentsByDid: Map<string, DidDocument>;
+  private verifiableCredentials: Map<number, VerifiableCredential>;
+  private deafAuthCredentials: Map<number, DeafAuthCredential>;
+  private idMeVerifications: Map<number, IdMeVerification>;
+  private idMeVerificationsByUuid: Map<string, IdMeVerification>;
+  private securityAuditLogs: Map<number, SecurityAuditLog>;
   
   // Finance/Tax/Insurance Module maps
   private financialTransactions: Map<number, FinancialTransaction>;
@@ -343,11 +348,12 @@ export class MemStorage implements IStorage {
   private nextWhySubmissionId: number;
   private nextWhyNotificationId: number;
   
-  // Vanuatu compliance counters
-  private nextComplianceCredentialId: number;
-  private nextVanuatuEntityId: number;
-  private nextVanuatuLicenseId: number;
-  private nextComplianceReportId: number;
+  // ID Sec Foundation counters
+  private nextDidDocumentId: number;
+  private nextVerifiableCredentialId: number;
+  private nextDeafAuthCredentialId: number;
+  private nextIdMeVerificationId: number;
+  private nextSecurityAuditLogId: number;
   
   // Finance/Tax/Insurance Module counters
   private nextFinancialTransactionId: number;
@@ -389,11 +395,14 @@ export class MemStorage implements IStorage {
     this.externalIdentitiesByProviderId = new Map();
     this.verificationRequests = new Map();
     
-    // Initialize Vanuatu compliance maps
-    this.complianceCredentials = new Map();
-    this.vanuatuEntities = new Map();
-    this.vanuatuLicenses = new Map();
-    this.complianceReports = new Map();
+    // Initialize ID Sec Foundation maps
+    this.didDocuments = new Map();
+    this.didDocumentsByDid = new Map();
+    this.verifiableCredentials = new Map();
+    this.deafAuthCredentials = new Map();
+    this.idMeVerifications = new Map();
+    this.idMeVerificationsByUuid = new Map();
+    this.securityAuditLogs = new Map();
     
     // Initialize Finance/Tax/Insurance Module maps
     this.financialTransactions = new Map();
@@ -424,11 +433,12 @@ export class MemStorage implements IStorage {
     this.nextWhySubmissionId = 1;
     this.nextWhyNotificationId = 1;
     
-    // Initialize Vanuatu compliance counters
-    this.nextComplianceCredentialId = 1;
-    this.nextVanuatuEntityId = 1;
-    this.nextVanuatuLicenseId = 1;
-    this.nextComplianceReportId = 1;
+    // Initialize ID Sec Foundation counters
+    this.nextDidDocumentId = 1;
+    this.nextVerifiableCredentialId = 1;
+    this.nextDeafAuthCredentialId = 1;
+    this.nextIdMeVerificationId = 1;
+    this.nextSecurityAuditLogId = 1;
     
     // Initialize Finance/Tax/Insurance Module counters
     this.nextFinancialTransactionId = 1;
@@ -568,7 +578,7 @@ export class MemStorage implements IStorage {
       },
       {
         id: "tenant-3",
-        name: "CIVIC Bridge",
+        name: "ID Sec Bridge",
         role: "viewer",
         active: true
       }
@@ -1364,18 +1374,6 @@ export class MemStorage implements IStorage {
     this.webhookPayloads.set(id, updatedPayload);
     return updatedPayload;
   }
-
-  async updateWebhookPayloadNotionId(id: string, notionEntryId: string): Promise<WebhookPayload | undefined> {
-    const payload = this.webhookPayloads.get(id);
-    if (!payload) return undefined;
-    
-    const updatedPayload: WebhookPayload = {
-      ...payload,
-      notionEntryId
-    };
-    this.webhookPayloads.set(id, updatedPayload);
-    return updatedPayload;
-  }
   
   async getWebhookPayloadsByStatus(status: string): Promise<WebhookPayload[]> {
     return Array.from(this.webhookPayloads.values())
@@ -1517,220 +1515,229 @@ export class MemStorage implements IStorage {
     return updatedRequest;
   }
 
-  // Vanuatu Compliance - Credentials
-  async createComplianceCredential(credential: InsertComplianceCredential): Promise<ComplianceCredential> {
-    const id = this.nextComplianceCredentialId++;
+  // ==========================================
+  // ID SEC FOUNDATION - W3C DID & VC FRAMEWORK
+  // ==========================================
+
+  async createDidDocument(doc: InsertDidDocument): Promise<DidDocument> {
+    const id = this.nextDidDocumentId++;
     const now = new Date();
-    const newCredential: ComplianceCredential = {
-      ...credential,
+    const newDoc: DidDocument = {
+      ...doc,
       id,
+      method: doc.method || "negrarosa",
+      verificationMethodType: doc.verificationMethodType || "Ed25519VerificationKey2020",
+      authenticationEndpoints: doc.authenticationEndpoints || null,
+      services: doc.services || null,
+      status: doc.status || "ACTIVE",
       createdAt: now,
       updatedAt: now
     };
-    this.complianceCredentials.set(id, newCredential);
-    return newCredential;
+    this.didDocuments.set(id, newDoc);
+    this.didDocumentsByDid.set(doc.did, newDoc);
+    return newDoc;
   }
 
-  async getComplianceCredential(id: number): Promise<ComplianceCredential | undefined> {
-    return this.complianceCredentials.get(id);
+  async getDidDocument(id: number): Promise<DidDocument | undefined> {
+    return this.didDocuments.get(id);
   }
 
-  async getComplianceCredentialsByUserId(userId: number): Promise<ComplianceCredential[]> {
-    return Array.from(this.complianceCredentials.values())
-      .filter(credential => credential.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  async getDidDocumentByDid(did: string): Promise<DidDocument | undefined> {
+    return this.didDocumentsByDid.get(did);
   }
 
-  async getComplianceCredentialsByJurisdiction(jurisdictionCode: string): Promise<ComplianceCredential[]> {
-    return Array.from(this.complianceCredentials.values())
-      .filter(credential => credential.jurisdictionCode === jurisdictionCode)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  async getDidDocumentsByUserId(userId: number): Promise<DidDocument[]> {
+    return Array.from(this.didDocuments.values())
+      .filter(doc => doc.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async updateComplianceCredential(id: number, updates: Partial<ComplianceCredential>): Promise<ComplianceCredential | undefined> {
-    const credential = this.complianceCredentials.get(id);
-    if (!credential) return undefined;
-    
-    const updatedCredential: ComplianceCredential = {
-      ...credential,
+  async updateDidDocument(id: number, updates: Partial<DidDocument>): Promise<DidDocument | undefined> {
+    const doc = this.didDocuments.get(id);
+    if (!doc) return undefined;
+
+    const updatedDoc: DidDocument = {
+      ...doc,
       ...updates,
       updatedAt: new Date()
     };
-    this.complianceCredentials.set(id, updatedCredential);
-    return updatedCredential;
+    this.didDocuments.set(id, updatedDoc);
+    this.didDocumentsByDid.set(updatedDoc.did, updatedDoc);
+    return updatedDoc;
   }
-  
-  // Vanuatu Entities
-  async createVanuatuEntity(entity: InsertVanuatuEntity): Promise<VanuatuEntity> {
-    const id = this.nextVanuatuEntityId++;
+
+  // Verifiable Credentials
+  async createVerifiableCredential(vc: InsertVerifiableCredential): Promise<VerifiableCredential> {
+    const id = this.nextVerifiableCredentialId++;
     const now = new Date();
-    const newEntity: VanuatuEntity = {
-      ...entity,
+    const newVc: VerifiableCredential = {
+      ...vc,
       id,
-      createdAt: now,
-      updatedAt: now
+      zkpCommitment: vc.zkpCommitment || null,
+      expirationDate: vc.expirationDate || null,
+      status: vc.status || "VALID",
+      createdAt: now
     };
-    this.vanuatuEntities.set(id, newEntity);
-    return newEntity;
+    this.verifiableCredentials.set(id, newVc);
+    return newVc;
   }
 
-  async getVanuatuEntity(id: number): Promise<VanuatuEntity | undefined> {
-    return this.vanuatuEntities.get(id);
+  async getVerifiableCredential(id: number): Promise<VerifiableCredential | undefined> {
+    return this.verifiableCredentials.get(id);
   }
 
-  async getVanuatuEntitiesByCredentialId(credentialId: number): Promise<VanuatuEntity[]> {
-    return Array.from(this.vanuatuEntities.values())
-      .filter(entity => entity.credentialId === credentialId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  async getVerifiableCredentialsByUserId(userId: number): Promise<VerifiableCredential[]> {
+    return Array.from(this.verifiableCredentials.values())
+      .filter(vc => vc.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async getVanuatuEntitiesWithUpcomingFilings(daysThreshold: number): Promise<VanuatuEntity[]> {
-    const now = new Date();
-    const thresholdDate = new Date(now);
-    thresholdDate.setDate(now.getDate() + daysThreshold);
-    
-    return Array.from(this.vanuatuEntities.values())
-      .filter(entity => {
-        if (!entity.annualFilingDueDate) return false;
-        const dueDate = new Date(entity.annualFilingDueDate);
-        return dueDate <= thresholdDate && dueDate >= now;
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.annualFilingDueDate!);
-        const dateB = new Date(b.annualFilingDueDate!);
-        return dateA.getTime() - dateB.getTime(); // Sort by closest due date first
-      });
+  async getVerifiableCredentialsByHolderDid(holderDid: string): Promise<VerifiableCredential[]> {
+    return Array.from(this.verifiableCredentials.values())
+      .filter(vc => vc.holderDid === holderDid)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async updateVanuatuEntity(id: number, updates: Partial<VanuatuEntity>): Promise<VanuatuEntity | undefined> {
-    const entity = this.vanuatuEntities.get(id);
-    if (!entity) return undefined;
-    
-    const updatedEntity: VanuatuEntity = {
-      ...entity,
-      ...updates,
-      updatedAt: new Date()
+  async updateVerifiableCredentialStatus(id: number, status: string): Promise<VerifiableCredential | undefined> {
+    const vc = this.verifiableCredentials.get(id);
+    if (!vc) return undefined;
+
+    const updatedVc: VerifiableCredential = {
+      ...vc,
+      status
     };
-    this.vanuatuEntities.set(id, updatedEntity);
-    return updatedEntity;
+    this.verifiableCredentials.set(id, updatedVc);
+    return updatedVc;
   }
-  
-  // Vanuatu Licenses
-  async createVanuatuLicense(license: InsertVanuatuLicense): Promise<VanuatuLicense> {
-    const id = this.nextVanuatuLicenseId++;
+
+  // ==========================================
+  // DEAFAUTH™ - ACCESSIBLE BIOMETRIC & GESTURE
+  // ==========================================
+
+  async createDeafAuthCredential(cred: InsertDeafAuthCredential): Promise<DeafAuthCredential> {
+    const id = this.nextDeafAuthCredentialId++;
     const now = new Date();
-    const newLicense: VanuatuLicense = {
-      ...license,
+    const newCred: DeafAuthCredential = {
+      ...cred,
       id,
+      signLanguageStandard: cred.signLanguageStandard || "ASL",
+      visualConfidenceScore: cred.visualConfidenceScore ?? 0.95,
+      hapticPatternCode: cred.hapticPatternCode || "PULSE-100-50-200",
+      videoRelayVerified: cred.videoRelayVerified ?? false,
+      relayOperatorId: cred.relayOperatorId || null,
+      passkeyStatus: cred.passkeyStatus || "ACTIVE",
       createdAt: now,
-      updatedAt: now
+      lastUsedAt: now
     };
-    this.vanuatuLicenses.set(id, newLicense);
-    return newLicense;
+    this.deafAuthCredentials.set(id, newCred);
+    return newCred;
   }
 
-  async getVanuatuLicense(id: number): Promise<VanuatuLicense | undefined> {
-    return this.vanuatuLicenses.get(id);
+  async getDeafAuthCredential(id: number): Promise<DeafAuthCredential | undefined> {
+    return this.deafAuthCredentials.get(id);
   }
 
-  async getVanuatuLicensesByEntityId(entityId: number): Promise<VanuatuLicense[]> {
-    return Array.from(this.vanuatuLicenses.values())
-      .filter(license => license.entityId === entityId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  async getDeafAuthCredentialsByUserId(userId: number): Promise<DeafAuthCredential[]> {
+    return Array.from(this.deafAuthCredentials.values())
+      .filter(cred => cred.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async getVanuatuLicensesByCredentialId(credentialId: number): Promise<VanuatuLicense[]> {
-    return Array.from(this.vanuatuLicenses.values())
-      .filter(license => license.credentialId === credentialId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
-  }
+  async updateDeafAuthUsage(id: number): Promise<DeafAuthCredential | undefined> {
+    const cred = this.deafAuthCredentials.get(id);
+    if (!cred) return undefined;
 
-  async getVanuatuLicensesNearingExpiration(daysThreshold: number): Promise<VanuatuLicense[]> {
-    const now = new Date();
-    const thresholdDate = new Date(now);
-    thresholdDate.setDate(now.getDate() + daysThreshold);
-    
-    return Array.from(this.vanuatuLicenses.values())
-      .filter(license => {
-        if (!license.expiryDate) return false;
-        const expiryDate = new Date(license.expiryDate);
-        return expiryDate <= thresholdDate && expiryDate >= now;
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.expiryDate!);
-        const dateB = new Date(b.expiryDate!);
-        return dateA.getTime() - dateB.getTime(); // Sort by closest expiry date first
-      });
-  }
-
-  async updateVanuatuLicense(id: number, updates: Partial<VanuatuLicense>): Promise<VanuatuLicense | undefined> {
-    const license = this.vanuatuLicenses.get(id);
-    if (!license) return undefined;
-    
-    const updatedLicense: VanuatuLicense = {
-      ...license,
-      ...updates,
-      updatedAt: new Date()
+    const updatedCred: DeafAuthCredential = {
+      ...cred,
+      lastUsedAt: new Date()
     };
-    this.vanuatuLicenses.set(id, updatedLicense);
-    return updatedLicense;
+    this.deafAuthCredentials.set(id, updatedCred);
+    return updatedCred;
   }
-  
-  // Compliance Reports
-  async createComplianceReport(report: InsertComplianceReport): Promise<ComplianceReport> {
-    const id = this.nextComplianceReportId++;
+
+  // ==========================================
+  // ID.ME™ - NIST IAL2/AAL2 VERIFICATION BRIDGE
+  // ==========================================
+
+  async createIdMeVerification(verif: InsertIdMeVerification): Promise<IdMeVerification> {
+    const id = this.nextIdMeVerificationId++;
     const now = new Date();
-    const newReport: ComplianceReport = {
-      ...report,
+    const newVerif: IdMeVerification = {
+      ...verif,
       id,
-      createdAt: now,
-      updatedAt: now,
-      webhookSent: false
+      assuranceLevel: verif.assuranceLevel || "NIST_IAL2",
+      verificationChannel: verif.verificationChannel || "ONLINE_SELF_SERVICE",
+      livenessScore: verif.livenessScore ?? 0.99,
+      documentType: verif.documentType || "DRIVERS_LICENSE",
+      verificationStatus: verif.verificationStatus || "VERIFIED",
+      expiresAt: verif.expiresAt || null,
+      didBinding: verif.didBinding || null,
+      issuedAt: now,
+      createdAt: now
     };
-    this.complianceReports.set(id, newReport);
-    return newReport;
+    this.idMeVerifications.set(id, newVerif);
+    this.idMeVerificationsByUuid.set(verif.idMeUuid, newVerif);
+    return newVerif;
   }
 
-  async getComplianceReport(id: number): Promise<ComplianceReport | undefined> {
-    return this.complianceReports.get(id);
+  async getIdMeVerification(id: number): Promise<IdMeVerification | undefined> {
+    return this.idMeVerifications.get(id);
   }
 
-  async getComplianceReportsByEntityId(entityId: number): Promise<ComplianceReport[]> {
-    return Array.from(this.complianceReports.values())
-      .filter(report => report.entityId === entityId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  async getIdMeVerificationsByUserId(userId: number): Promise<IdMeVerification[]> {
+    return Array.from(this.idMeVerifications.values())
+      .filter(v => v.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async getComplianceReportsByLicenseId(licenseId: number): Promise<ComplianceReport[]> {
-    return Array.from(this.complianceReports.values())
-      .filter(report => report.licenseId === licenseId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Most recent first
+  async getIdMeVerificationByUuid(uuid: string): Promise<IdMeVerification | undefined> {
+    return this.idMeVerificationsByUuid.get(uuid);
   }
 
-  async updateComplianceReport(id: number, updates: Partial<ComplianceReport>): Promise<ComplianceReport | undefined> {
-    const report = this.complianceReports.get(id);
-    if (!report) return undefined;
-    
-    const updatedReport: ComplianceReport = {
-      ...report,
-      ...updates,
-      updatedAt: new Date()
+  async updateIdMeVerification(id: number, updates: Partial<IdMeVerification>): Promise<IdMeVerification | undefined> {
+    const verif = this.idMeVerifications.get(id);
+    if (!verif) return undefined;
+
+    const updatedVerif: IdMeVerification = {
+      ...verif,
+      ...updates
     };
-    this.complianceReports.set(id, updatedReport);
-    return updatedReport;
+    this.idMeVerifications.set(id, updatedVerif);
+    this.idMeVerificationsByUuid.set(updatedVerif.idMeUuid, updatedVerif);
+    return updatedVerif;
   }
 
-  async updateComplianceReportWebhookStatus(id: number, sent: boolean): Promise<ComplianceReport | undefined> {
-    const report = this.complianceReports.get(id);
-    if (!report) return undefined;
-    
-    const updatedReport: ComplianceReport = {
-      ...report,
-      webhookSent: sent,
-      updatedAt: new Date()
+  // ==========================================
+  // ID SEC FOUNDATION - AUDIT LOGS & ZERO TRUST
+  // ==========================================
+
+  async createSecurityAuditLog(log: InsertSecurityAuditLog): Promise<SecurityAuditLog> {
+    const id = this.nextSecurityAuditLogId++;
+    const newLog: SecurityAuditLog = {
+      ...log,
+      id,
+      userId: log.userId ?? null,
+      sourceIp: log.sourceIp || "127.0.0.1",
+      userAgent: log.userAgent || null,
+      threatLevel: log.threatLevel || "LOW",
+      actionResult: log.actionResult || "SUCCESS",
+      metadata: log.metadata || null,
+      createdAt: new Date()
     };
-    this.complianceReports.set(id, updatedReport);
-    return updatedReport;
+    this.securityAuditLogs.set(id, newLog);
+    return newLog;
+  }
+
+  async getSecurityAuditLogs(limit: number = 50): Promise<SecurityAuditLog[]> {
+    return Array.from(this.securityAuditLogs.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async getSecurityAuditLogsByUserId(userId: number): Promise<SecurityAuditLog[]> {
+    return Array.from(this.securityAuditLogs.values())
+      .filter(log => log.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   // Finance/Tax/Insurance Module Methods

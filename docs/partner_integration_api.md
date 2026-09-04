@@ -230,6 +230,97 @@ Authorization: Bearer {negraRosa_admin_key}
 4. **Transparent Usage**: Partners must log and report all data usage
 5. **Data Minimization**: Only necessary data is shared for each specific purpose
 
+## ID Sec Foundation & Cryptographic Enclave APIs
+
+NegraRosa exposes zero-trust hardware and neural verification endpoints for high-assurance integrations.
+
+### 1. Neural Unit Session Enclave
+
+Generates cryptographically signed `negrarosa_neural_unit` session cookies with entropy seeds (`abbdada_*` format) and Ed25519 zero-knowledge proof suites.
+
+```http
+POST /api/v1/idsec/neural-unit/session
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "entropySeed": "abbdada_custom_entropy"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "neural_unit_a94f83bc128e4d2...",
+  "placeholderSeed": "abbdada_custom_entropy",
+  "cryptoSuite": "Ed25519-ZKP-Neural2026",
+  "expiresAt": "2026-09-10T19:40:00.000Z"
+}
+```
+
+### 2. Device Attestation (`sqtidevc`)
+
+Authenticates hardware client integrity, binding the active session to a secure device profile with immutable audit logging and IP resolution.
+
+```http
+POST /api/v1/idsec/device/sqtidevc
+Content-Type: application/json
+
+{
+  "deviceId": "sqtidevc_98a72b",
+  "clientPlatform": "linux-x86_64",
+  "userId": 1
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "verified": true,
+  "deviceId": "sqtidevc_98a72b",
+  "attestationHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "clientIp": "192.0.2.1",
+  "securityStatus": "SECURE_ENCLAVE_ACTIVE"
+}
+```
+
+### 3. Google URI TXT Record Verification
+
+Computes domain and URI SHA-256 cryptographic verification hashes formatted for standard DNS `google-site-verification` TXT records and URI URN proofs.
+
+```http
+POST /api/v1/idsec/google-uri-txt
+Content-Type: application/json
+
+{
+  "domain": "negrarosa.security",
+  "uriPath": "/.well-known/did.json"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "domain": "negrarosa.security",
+  "uri": "/.well-known/did.json",
+  "txtRecord": {
+    "type": "TXT",
+    "host": "@",
+    "value": "google-site-verification=...",
+    "ttl": 3600
+  },
+  "hashProof": {
+    "algorithm": "SHA-256",
+    "digestHex": "...",
+    "uriProofHash": "urn:sha256:..."
+  },
+  "status": "ACTIVE"
+}
+```
+
 ---
 
 This API specification enables third-party partners to integrate with the NegraRosa Inclusive Security Framework while ensuring user data remains protected and under user control at all times. The NFT-based identity tokens serve as the cornerstone of this ecosystem, enabling portable identity verification across various services.

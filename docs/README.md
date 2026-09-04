@@ -6,11 +6,22 @@ This directory contains comprehensive documentation for the NegraRosa Inclusive 
 
 ```
 docs/
-├── partner_integration_api.md  # API specifications for third-party partner integrations
-├── templates/                  # Templates for various documentation needs
-│   └── incident-template.md   # Security incident report template
-└── incidents/                  # Directory for security incident postmortems
-    └── .gitkeep               # Keep this directory in git
+├── partner_integration_api.md    # API specifications for third-party and ID Sec enclave integrations
+├── PASETO_AUTHENTICATION.md      # PASETO token-based authentication implementation
+├── SECURITY_RITUALS.md           # Security rituals framework (daily, weekly, quarterly)
+├── SECURITY_STATUS.md            # Security posture and live workflow dashboard
+├── SECURITY_TRAINING.md          # Secure coding training curriculum
+├── THREAT_MODELING_TEMPLATE.md   # STRIDE threat modeling template
+├── FILE_STRUCTURE.md             # Complete codebase directory breakdown
+├── COMPLIANCE_REPORT.md          # WCAG 2.2 AAA, NIST IAL2, and standards compliance
+├── AUDIT_REPORT.md               # Repository audit and security verification
+├── IMPLEMENTATION_SUMMARY.md     # Feature implementation documentation
+├── TRANSFORMATION_SUMMARY.md     # Zero-trust transformation log
+├── GITHUB_PAGES_SETUP.md         # Client static deployment guide
+├── DEPLOYMENT_CHECKLIST.md       # Pre/post-deployment verification
+├── templates/                    # Documentation templates
+│   └── incident-template.md      # Security incident report template
+└── sbom/                         # Software Bill of Materials (SPDX & CycloneDX)
 ```
 
 ## Core Documentation Files
@@ -103,9 +114,8 @@ For documentation questions or suggestions:
 
 ---
 
-**Last Updated**: 2025-12-06  
-**Maintained by**: NegraRosa Team
-Welcome to the NegraRosa documentation. This directory contains comprehensive guides and specifications for the NegraRosa Inclusive Security Framework.
+**Last Updated**: 2026-09-03  
+**Maintained by**: NegraRosa Security & Architecture Team
 
 ## 📚 Documentation Index
 

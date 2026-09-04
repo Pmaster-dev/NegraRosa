@@ -126,9 +126,9 @@ export default function AboutPlatform({ onClose }: AboutPlatformProps) {
               <div className="bg-background p-4 rounded-lg border border-border">
                 <h4 className="font-medium mb-2 flex items-center">
                   <Handshake className="h-4 w-4 mr-2" />
-                  Partnerships
+                  Standards & Protocols
                 </h4>
-                <p className="text-sm text-muted-foreground">Collaborations with CIVIC.com for identity verification, financial institutions, and community advocacy groups.</p>
+                <p className="text-sm text-muted-foreground">Direct integrations with DeafAuth™ biometric gestures, ID.me™ NIST SP 800-63-3 IAL2, and W3C Verifiable Credential standard bodies.</p>
               </div>
             </div>
             
@@ -161,8 +161,8 @@ export default function AboutPlatform({ onClose }: AboutPlatformProps) {
               
               <div className="relative pl-8 pb-4 border-l border-muted">
                 <div className="absolute left-[-8px] top-0 bg-muted h-4 w-4 rounded-full border border-border"></div>
-                <h4 className="font-medium">Q2 2024 - Partner Integrations</h4>
-                <p className="text-sm text-muted-foreground">Expanded verification options through partnerships with CIVIC.com and financial institutions.</p>
+                <h4 className="font-medium">Q2 2024 - Accessible Biometrics</h4>
+                <p className="text-sm text-muted-foreground">Expanded verification options through DeafAuth™ visual gesture passkeys and ID.me NIST IAL2 assurance.</p>
               </div>
               
               <div className="relative pl-8 pb-4 border-l border-muted">

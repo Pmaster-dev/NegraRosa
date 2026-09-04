@@ -218,6 +218,7 @@ server/
 │   ├── v1/                   # API version 1
 │   │   ├── auth.ts          # Authentication endpoints
 │   │   ├── fibonRoseTrust.ts # FibonRose trust system
+│   │   ├── idsec.ts         # ID Sec Foundation (W3C DID, neural-unit, sqtidevc, Google URI TXT)
 │   │   ├── index.ts         # API entry point
 │   │   ├── opensource/      # Open source integrations
 │   │   │   └── index.ts
@@ -228,7 +229,6 @@ server/
 │   │   │   └── index.ts
 │   │   ├── tenants.ts       # Multi-tenancy
 │   │   ├── users.ts         # User management
-│   │   ├── vanuatu.ts       # Vanuatu compliance
 │   │   ├── verification.ts  # Verification endpoints
 │   │   └── webhooks.ts      # Webhook endpoints
 │   └── accessibility.ts      # Accessibility endpoints
@@ -244,7 +244,6 @@ server/
 │   ├── AuthService.ts
 │   ├── BackgroundTaskService.ts
 │   ├── CSVImportService.ts
-│   ├── CivicService.ts
 │   ├── DeafAuthService.ts
 │   ├── ErrorsAndOmissionsManager.ts
 │   ├── FibonorseService.ts
@@ -256,11 +255,9 @@ server/
 │   ├── ReputationManager.ts
 │   ├── RiskAssessmentService.ts
 │   ├── RiskManager.ts
-│   ├── VanuatuComplianceService.ts
 │   ├── WebhookDataService.ts
 │   ├── WebhookService.ts
 │   ├── WebsiteVerificationService.ts
-│   ├── XanoService.ts
 │   └── accessibilityService.ts
 │
 ├── db.ts                    # Database connection and configuration
@@ -275,11 +272,10 @@ server/
 Services are organized by domain:
 
 - **Authentication:** Auth0Service, AuthService, DeafAuthService, PasetoService
-- **Verification:** InclusiveVerificationService, CivicService, WebsiteVerificationService
+- **Verification:** InclusiveVerificationService, WebsiteVerificationService
 - **Financial:** PlaidService, StripeService, FinancialVerificationService
 - **Risk & Fraud:** FraudDetectionEngine, RiskAssessmentService, RiskManager
-- **Compliance:** VanuatuComplianceService
-- **Integration:** WebhookService, PinkSyncService, XanoService
+- **Integration:** WebhookService, PinkSyncService
 - **Management:** ReputationManager, ErrorsAndOmissionsManager
 
 ### Shared (`shared/`)

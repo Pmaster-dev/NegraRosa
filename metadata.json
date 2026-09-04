@@ -1,0 +1,6 @@
+{
+  "name": "NegraRosa - Inclusive Security Framework",
+  "description": "Deaf-first security framework empowering organizations with accessible, powerful security solutions. Identity verification, authentication, and compliance made inclusive.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
