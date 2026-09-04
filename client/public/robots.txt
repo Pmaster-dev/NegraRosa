@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/v1/tenants/
+Disallow: /api/v1/auth/admin
+
+Sitemap: https://ais-pre-47gxaxstd6xawe3o4ovqun-408361840279.us-east1.run.app/sitemap.xml

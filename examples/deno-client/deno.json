@@ -1,0 +1,11 @@
+{
+  "name": "negrarosa-deno-client",
+  "version": "1.0.0",
+  "exports": "./client.ts",
+  "tasks": {
+    "start": "deno run --allow-net --allow-env client.ts"
+  },
+  "compilerOptions": {
+    "strict": true
+  }
+}

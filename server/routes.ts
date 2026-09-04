@@ -47,6 +47,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
   const authService = new AuthService();
   
+  // Public SEO, Sitemap & Security Policy Endpoints
+  app.get("/sitemap.xml", (req, res) => {
+    const host = req.get("host") || "ais-pre-47gxaxstd6xawe3o4ovqun-408361840279.us-east1.run.app";
+    const proto = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const baseUrl = `${proto}://${host}`;
+
+    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/mainframe</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/security-examples</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/individual-id</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/accessibility</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/pricing</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/webhooks</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/demo</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/sitemap</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/api/v1/idsec/status</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`;
+    res.header("Content-Type", "application/xml");
+    res.send(sitemapXml);
+  });
+
+  app.get("/robots.txt", (req, res) => {
+    const host = req.get("host") || "ais-pre-47gxaxstd6xawe3o4ovqun-408361840279.us-east1.run.app";
+    const proto = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const baseUrl = `${proto}://${host}`;
+
+    const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /api/v1/tenants/
+Disallow: /api/v1/auth/admin
+
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+    res.header("Content-Type", "text/plain");
+    res.send(robotsTxt);
+  });
+
+  const securityTxtHandler = (req: any, res: any) => {
+    const host = req.get("host") || "ais-pre-47gxaxstd6xawe3o4ovqun-408361840279.us-east1.run.app";
+    const proto = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const baseUrl = `${proto}://${host}`;
+
+    const securityTxt = `# NegraRosa Security Policy (RFC 9116)
+Contact: mailto:security@mbtq.dev
+Contact: https://github.com/NegraRosa/negrarosa-security-framework/security/advisories/new
+Expires: 2027-12-31T23:59:59.000Z
+Encryption: ${baseUrl}/.well-known/pgp-key.txt
+Acknowledgments: https://github.com/NegraRosa/negrarosa-security-framework/blob/main/docs/SECURITY_STATUS.md
+Preferred-Languages: en, ase
+Canonical: ${baseUrl}/.well-known/security.txt
+Policy: https://github.com/NegraRosa/negrarosa-security-framework/blob/main/SECURITY.md
+Hiring: ${baseUrl}/individual-id
+CSAF: ${baseUrl}/.well-known/csaf/provider-metadata.json
+`;
+    res.header("Content-Type", "text/plain");
+    res.send(securityTxt);
+  };
+
+  app.get("/.well-known/security.txt", securityTxtHandler);
+  app.get("/security.txt", securityTxtHandler);
+
   // Create API router
   const apiRouter = Router();
   app.use("/api", apiRouter);
