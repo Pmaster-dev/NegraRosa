@@ -289,6 +289,8 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private verifications: Map<number, Verification>;
   private reputations: Map<number, Reputation>;
+  // O(1) secondary index mapping userId directly to Reputation for fast hot-path lookups
+  private reputationsByUserId: Map<number, Reputation>;
   private transactions: Map<number, Transaction>;
   private riskAssessments: Map<number, RiskAssessment>;
   private claims: Map<number, Claim>;
@@ -374,6 +376,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.verifications = new Map();
     this.reputations = new Map();
+    this.reputationsByUserId = new Map();
     this.transactions = new Map();
     this.riskAssessments = new Map();
     this.claims = new Map();
@@ -658,9 +661,8 @@ export class MemStorage implements IStorage {
 
   // Reputation system
   async getReputation(userId: number): Promise<Reputation | undefined> {
-    return Array.from(this.reputations.values()).find(
-      (reputation) => reputation.userId === userId
-    );
+    // ⚡ Bolt Optimization: Use secondary index for O(1) lookup instead of O(N) Array.from scan
+    return this.reputationsByUserId.get(userId);
   }
 
   async createReputation(reputation: InsertReputation): Promise<Reputation> {
@@ -672,6 +674,8 @@ export class MemStorage implements IStorage {
       updatedAt: now
     };
     this.reputations.set(id, newReputation);
+    // Maintain secondary index for O(1) lookups by userId
+    this.reputationsByUserId.set(reputation.userId, newReputation);
     return newReputation;
   }
 
@@ -685,6 +689,8 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.reputations.set(reputation.id, updatedReputation);
+    // Maintain secondary index for O(1) lookups by userId
+    this.reputationsByUserId.set(userId, updatedReputation);
     return updatedReputation;
   }
 
