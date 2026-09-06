@@ -3,23 +3,27 @@ import { useState, useEffect, useRef } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import NotFound from "@/pages/not-found";
-import Dashboard from "@/pages/Dashboard";
-import MainframeDashboard from "@/pages/MainframeDashboard";
-import WebhookManagement from "@/pages/WebhookManagement";
-import AccessibilityPage from "@/pages/AccessibilityPage";
-import PricingPage from "@/pages/PricingPage";
-import IndividualIdPage from "@/pages/IndividualIdPage";
-import DisasterRecoveryPage from "@/pages/DisasterRecoveryPage";
+import { lazy, Suspense } from "react";
 import SupportBubble from "@/components/SupportBubble";
 import SmoothScrollLink from "@/components/SmoothScrollLink";
 import ScrollToTop from "@/components/ScrollToTop";
 import PinkSyncWidget from "@/components/PinkSyncWidget";
 import { GestureEasterEgg } from "@/components/GestureEasterEgg";
 import { EasterEggHints } from "@/components/EasterEggHints";
-import SitemapPage from "@/pages/SitemapPage";
 import { Menu, X, ChevronRight, ChevronDown, Github } from "lucide-react";
 import "@/styles/ScrollStyles.css";
+
+// Performance Optimization: Lazy load route components for code splitting
+// Reduces initial JavaScript bundle size significantly on page load
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const MainframeDashboard = lazy(() => import("@/pages/MainframeDashboard"));
+const WebhookManagement = lazy(() => import("@/pages/WebhookManagement"));
+const AccessibilityPage = lazy(() => import("@/pages/AccessibilityPage"));
+const PricingPage = lazy(() => import("@/pages/PricingPage"));
+const IndividualIdPage = lazy(() => import("@/pages/IndividualIdPage"));
+const DisasterRecoveryPage = lazy(() => import("@/pages/DisasterRecoveryPage"));
+const SitemapPage = lazy(() => import("@/pages/SitemapPage"));
 
 function MainNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -470,104 +474,110 @@ function Router({ initialUserId }: { initialUserId: number }) {
     <div className="flex flex-col min-h-screen">
       <MainNav />
       <main className="flex-1">
-        <Switch>
-          <Route path="/">
-            <Dashboard userId={initialUserId} />
-          </Route>
-          <Route path="/mainframe">
-            <MainframeDashboard userId={initialUserId} />
-          </Route>
-          <Route path="/webhooks">
-            <WebhookManagement />
-          </Route>
-          <Route path="/accessibility">
-            <AccessibilityPage />
-          </Route>
-          <Route path="/pricing">
-            <PricingPage />
-          </Route>
-          <Route path="/individual-id">
-            <IndividualIdPage />
-          </Route>
-          <Route path="/demo">
-            <div className="container mx-auto py-8">
-              <h1 className="text-3xl font-bold mb-6">Interactive Demo</h1>
-              <p className="text-muted-foreground mb-8">
-                Experience the power of NegraRosa Security with our interactive demos
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-6">
-                  <h3 className="text-xl font-medium mb-2">User Experience Demo</h3>
-                  <p className="text-muted-foreground mb-4">
-                    See how verification works from the user's perspective
-                  </p>
-                  <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
-                    Try Demo
-                  </button>
-                </div>
-                <div className="border rounded-lg p-6">
-                  <h3 className="text-xl font-medium mb-2">Business Integration Demo</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Explore how businesses can integrate our verification system
-                  </p>
-                  <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
-                    Try Demo
-                  </button>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          </div>
+        }>
+          <Switch>
+            <Route path="/">
+              <Dashboard userId={initialUserId} />
+            </Route>
+            <Route path="/mainframe">
+              <MainframeDashboard userId={initialUserId} />
+            </Route>
+            <Route path="/webhooks">
+              <WebhookManagement />
+            </Route>
+            <Route path="/accessibility">
+              <AccessibilityPage />
+            </Route>
+            <Route path="/pricing">
+              <PricingPage />
+            </Route>
+            <Route path="/individual-id">
+              <IndividualIdPage />
+            </Route>
+            <Route path="/demo">
+              <div className="container mx-auto py-8">
+                <h1 className="text-3xl font-bold mb-6">Interactive Demo</h1>
+                <p className="text-muted-foreground mb-8">
+                  Experience the power of NegraRosa Security with our interactive demos
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="border rounded-lg p-6">
+                    <h3 className="text-xl font-medium mb-2">User Experience Demo</h3>
+                    <p className="text-muted-foreground mb-4">
+                      See how verification works from the user's perspective
+                    </p>
+                    <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+                      Try Demo
+                    </button>
+                  </div>
+                  <div className="border rounded-lg p-6">
+                    <h3 className="text-xl font-medium mb-2">Business Integration Demo</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Explore how businesses can integrate our verification system
+                    </p>
+                    <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+                      Try Demo
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Route>
-          <Route path="/sitemap">
-            <SitemapPage />
-          </Route>
-          <Route path="/disaster-recovery">
-            <DisasterRecoveryPage />
-          </Route>
-          <Route path="/stolen-phone">
-            <DisasterRecoveryPage />
-          </Route>
-          <Route path="/emergency">
-            <DisasterRecoveryPage />
-          </Route>
-          <Route path="/security-examples">
-            <SitemapPage />
-          </Route>
-          <Route path="/login">
-            <div className="container mx-auto py-8">
-              <div className="max-w-md mx-auto">
-                <h1 className="text-3xl font-bold mb-6">Login or Register</h1>
-                <div className="bg-card border rounded-lg p-6 shadow-sm">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
-                      <input 
-                        type="email" 
-                        className="w-full p-2 border rounded-md" 
-                        placeholder="your@email.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Password</label>
-                      <input 
-                        type="password" 
-                        className="w-full p-2 border rounded-md"
-                      />
-                    </div>
-                    <button className="w-full bg-primary text-primary-foreground p-2 rounded-md">
-                      Login
-                    </button>
-                    <div className="text-center">
-                      <span className="text-sm text-muted-foreground">
-                        Don't have an account? <a href="#" className="text-primary hover:underline">Register</a>
-                      </span>
+            </Route>
+            <Route path="/sitemap">
+              <SitemapPage />
+            </Route>
+            <Route path="/disaster-recovery">
+              <DisasterRecoveryPage />
+            </Route>
+            <Route path="/stolen-phone">
+              <DisasterRecoveryPage />
+            </Route>
+            <Route path="/emergency">
+              <DisasterRecoveryPage />
+            </Route>
+            <Route path="/security-examples">
+              <SitemapPage />
+            </Route>
+            <Route path="/login">
+              <div className="container mx-auto py-8">
+                <div className="max-w-md mx-auto">
+                  <h1 className="text-3xl font-bold mb-6">Login or Register</h1>
+                  <div className="bg-card border rounded-lg p-6 shadow-sm">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Email</label>
+                        <input
+                          type="email"
+                          className="w-full p-2 border rounded-md"
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Password</label>
+                        <input
+                          type="password"
+                          className="w-full p-2 border rounded-md"
+                        />
+                      </div>
+                      <button className="w-full bg-primary text-primary-foreground p-2 rounded-md">
+                        Login
+                      </button>
+                      <div className="text-center">
+                        <span className="text-sm text-muted-foreground">
+                          Don't have an account? <a href="#" className="text-primary hover:underline">Register</a>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Route>
-          <Route component={NotFound} />
-        </Switch>
+            </Route>
+            <Route component={NotFound} />
+          </Switch>
+        </Suspense>
       </main>
       <Footer />
     </div>
