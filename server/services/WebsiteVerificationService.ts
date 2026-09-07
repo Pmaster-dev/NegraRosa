@@ -39,6 +39,26 @@ export class WebsiteVerificationService {
   async verifyWebsite(url: string): Promise<VerificationResult> {
     // Normalize URL
     url = this.normalizeUrl(url);
+
+    // SSRF Risk Mitigation: Validate URL host and scheme to prevent internal network probing
+    if (!this.isSafeUrl(url)) {
+      const result = {
+        success: false,
+        score: 0,
+        details: {
+          hasMultiplePages: false,
+          hasRealContent: false,
+          hasInteractiveElements: false,
+          hasContactInfo: false,
+          pageLoadTime: 0,
+          pageSize: 0,
+          metaTagsScore: 0
+        },
+        message: 'Access restricted: URL is not a safe public destination (SSRF protection)',
+      };
+      this.cachedResults.set(url, { result, timestamp: Date.now() });
+      return result;
+    }
     
     // Check cache first
     const cached = this.cachedResults.get(url);
@@ -214,6 +234,7 @@ export class WebsiteVerificationService {
         // Analyze up to 3 more pages
         for (const link of internalLinks) {
           try {
+            if (!this.isSafeUrl(link)) continue;
             const pageResponse = await axios.get(link, { timeout: 5000 });
             if (pageResponse.status === 200) {
               totalPages++;
@@ -390,10 +411,38 @@ export class WebsiteVerificationService {
   }
   
   /**
+   * Validates if a URL is safe to fetch, mitigating Server-Side Request Forgery (SSRF)
+   */
+  private isSafeUrl(urlStr: string): boolean {
+    try {
+      const parsed = new URL(urlStr);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return false;
+      }
+      const rawHostname = parsed.hostname.toLowerCase();
+      const hostname = rawHostname.replace(/^\[|\]$/g, '');
+      if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1' || hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.lan') || hostname.startsWith('fc') || hostname.startsWith('fd') || hostname.startsWith('fe80:')) {
+        return false;
+      }
+      const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+      if (ipv4Match) {
+        const [, p1, p2] = ipv4Match.map(Number);
+        if (p1 === 10 || p1 === 127 || (p1 === 169 && p2 === 254) || (p1 === 172 && p2 >= 16 && p2 <= 31) || (p1 === 192 && p2 === 168) || p1 === 0) {
+          return false;
+        }
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Normalize URL by adding protocol if missing and removing trailing slash
    */
   private normalizeUrl(url: string): string {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = url.trim();
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
       url = 'https://' + url;
     }
     return url.endsWith('/') ? url.slice(0, -1) : url;
