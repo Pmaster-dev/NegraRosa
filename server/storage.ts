@@ -287,8 +287,12 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  // Bolt performance optimization: Hash Map indexes for O(1) lookups and zero allocation GC overhead
+  private usersByUsername: Map<string, User>;
+  private usersByExternalId: Map<string, User>;
   private verifications: Map<number, Verification>;
   private reputations: Map<number, Reputation>;
+  private reputationsByUserId: Map<number, Reputation>;
   private transactions: Map<number, Transaction>;
   private riskAssessments: Map<number, RiskAssessment>;
   private claims: Map<number, Claim>;
@@ -372,8 +376,11 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.users = new Map();
+    this.usersByUsername = new Map();
+    this.usersByExternalId = new Map();
     this.verifications = new Map();
     this.reputations = new Map();
+    this.reputationsByUserId = new Map();
     this.transactions = new Map();
     this.riskAssessments = new Map();
     this.claims = new Map();
@@ -471,15 +478,13 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    // Bolt: O(1) hash map lookup instead of O(N) array allocation + linear search
+    return this.usersByUsername.get(username);
   }
 
   async getUserByExternalId(externalId: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.externalId === externalId,
-    );
+    // Bolt: O(1) hash map lookup instead of O(N) array allocation + linear search
+    return this.usersByExternalId.get(externalId);
   }
   
   async createUserFromAuth0(userData: {
@@ -505,6 +510,8 @@ export class MemStorage implements IStorage {
       lastLogin: now
     };
     this.users.set(id, user);
+    if (user.username) this.usersByUsername.set(user.username, user);
+    if (user.externalId) this.usersByExternalId.set(user.externalId, user);
     
     // Initialize reputation for new user
     await this.createReputation({
@@ -537,6 +544,14 @@ export class MemStorage implements IStorage {
     };
     
     this.users.set(userId, updatedUser);
+    if (user.username && user.username !== updatedUser.username) {
+      this.usersByUsername.delete(user.username);
+    }
+    if (user.externalId && user.externalId !== updatedUser.externalId) {
+      this.usersByExternalId.delete(user.externalId);
+    }
+    if (updatedUser.username) this.usersByUsername.set(updatedUser.username, updatedUser);
+    if (updatedUser.externalId) this.usersByExternalId.set(updatedUser.externalId, updatedUser);
     return updatedUser;
   }
   
@@ -594,6 +609,8 @@ export class MemStorage implements IStorage {
       createdAt: now
     };
     this.users.set(id, user);
+    if (user.username) this.usersByUsername.set(user.username, user);
+    if (user.externalId) this.usersByExternalId.set(user.externalId, user);
     
     // Initialize reputation for new user
     await this.createReputation({
@@ -658,9 +675,8 @@ export class MemStorage implements IStorage {
 
   // Reputation system
   async getReputation(userId: number): Promise<Reputation | undefined> {
-    return Array.from(this.reputations.values()).find(
-      (reputation) => reputation.userId === userId
-    );
+    // Bolt: O(1) hash map lookup instead of O(N) array allocation + linear search
+    return this.reputationsByUserId.get(userId);
   }
 
   async createReputation(reputation: InsertReputation): Promise<Reputation> {
@@ -672,6 +688,7 @@ export class MemStorage implements IStorage {
       updatedAt: now
     };
     this.reputations.set(id, newReputation);
+    this.reputationsByUserId.set(newReputation.userId, newReputation);
     return newReputation;
   }
 
@@ -685,6 +702,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.reputations.set(reputation.id, updatedReputation);
+    this.reputationsByUserId.set(userId, updatedReputation);
     return updatedReputation;
   }
 
