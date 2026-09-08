@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Shield, Award, Lock, Eye, Fingerprint, Users, Code, Zap, Badge, Star, Check, Clock, Upload, FileCheck, ThumbsUp, Search, Scan, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,327 +24,358 @@ interface SecurityAchievementBadgesProps {
   userId: number;
 }
 
+// Categories list stored statically to avoid re-creation on every render
+const CATEGORIES: SecurityBadge["category"][] = [
+  "verification", "authentication", "community", "education",
+  "contribution", "discovery", "scanning", "implementation",
+  "advanced", "entrepreneur"
+];
+
+// Static initial badge dataset defined outside component scope to avoid allocations on render
+const INITIAL_BADGES: SecurityBadge[] = [
+  {
+    id: "identity-verified",
+    name: "Identity Guardian",
+    description: "Successfully verified your identity through multiple verification methods",
+    icon: <Shield className="h-6 w-6" />,
+    level: 1,
+    isUnlocked: true,
+    progress: 100,
+    category: "verification",
+    colorClass: "text-green-500 border-green-500 bg-green-500/10",
+    rewards: ["Access to enhanced security features", "Verification badge on community posts"],
+    dateEarned: "2023-08-15"
+  },
+  {
+    id: "sign-auth-master",
+    name: "Sign Authentication Master",
+    description: "Completed sign language authentication setup and successfully used it for login",
+    icon: <Fingerprint className="h-6 w-6" />,
+    level: 2,
+    isUnlocked: true,
+    progress: 100,
+    category: "authentication",
+    colorClass: "text-blue-500 border-blue-500 bg-blue-500/10",
+    rewards: ["Unlock gesture-based quick auth", "Security clearance level 2"],
+    dateEarned: "2023-09-02"
+  },
+  {
+    id: "community-contributor",
+    name: "Community Contributor",
+    description: "Actively participated in the deaf security community and contributed to discussions",
+    icon: <Users className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 75,
+    category: "community",
+    colorClass: "text-purple-500 border-purple-500 bg-purple-500/10",
+    rewards: ["Access to exclusive community forums", "Ability to create community security guides"]
+  },
+  {
+    id: "quick-responder",
+    name: "Alert Responder",
+    description: "Responded to security alerts within a 12-hour window multiple times",
+    icon: <Zap className="h-6 w-6" />,
+    level: 1,
+    isUnlocked: true,
+    progress: 100,
+    category: "verification",
+    colorClass: "text-amber-500 border-amber-500 bg-amber-500/10",
+    rewards: ["Priority support access", "Early warning system access"],
+    dateEarned: "2023-07-20"
+  },
+  {
+    id: "security-educator",
+    name: "Security Educator",
+    description: "Completed the full security education course for deaf-first approaches",
+    icon: <Award className="h-6 w-6" />,
+    level: 4,
+    isUnlocked: false,
+    progress: 60,
+    category: "education",
+    colorClass: "text-indigo-500 border-indigo-500 bg-indigo-500/10",
+    rewards: ["Ability to create security training materials", "Featured contributor status"]
+  },
+  {
+    id: "code-contributor",
+    name: "Code Contributor",
+    description: "Contributed to the open source deaf-first security framework",
+    icon: <Code className="h-6 w-6" />,
+    level: 5,
+    isUnlocked: false,
+    progress: 30,
+    category: "contribution",
+    colorClass: "text-rose-500 border-rose-500 bg-rose-500/10",
+    rewards: ["Named recognition in the project", "Developer badge in community"]
+  },
+  {
+    id: "multi-factor-master",
+    name: "Multi-Factor Master",
+    description: "Set up all available security authentication methods for your account",
+    icon: <Lock className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 40,
+    category: "authentication",
+    colorClass: "text-cyan-500 border-cyan-500 bg-cyan-500/10",
+    rewards: ["Ultra-secure account status", "Simplified authentication process"]
+  },
+  {
+    id: "early-adopter",
+    name: "Early Adopter",
+    description: "One of the first 100 community members to use the NegraRosa security framework",
+    icon: <Star className="h-6 w-6" />,
+    level: 2,
+    isUnlocked: true,
+    progress: 100,
+    category: "community",
+    colorClass: "text-yellow-500 border-yellow-500 bg-yellow-500/10",
+    rewards: ["Exclusive early adopter badge", "Beta access to new features"],
+    dateEarned: "2023-05-10"
+  },
+  {
+    id: "verification-streak",
+    name: "Verification Streak",
+    description: "Completed identity verification checks for 5 consecutive months",
+    icon: <Clock className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 80,
+    category: "verification",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Extended verification periods", "Trusted member status"]
+  },
+  {
+    id: "content-contributor",
+    name: "Content Contributor",
+    description: "Uploaded helpful security resource materials for the deaf community",
+    icon: <Upload className="h-6 w-6" />,
+    level: 2,
+    isUnlocked: false,
+    progress: 20,
+    category: "contribution",
+    colorClass: "text-emerald-500 border-emerald-500 bg-emerald-500/10",
+    rewards: ["Featured content creator tag", "Content distribution priority"]
+  },
+  {
+    id: "asset-discovery-pioneer",
+    name: "Asset Discovery Pioneer",
+    description: "Successfully identified and cataloged security risks in the network",
+    icon: <Search className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 45,
+    category: "discovery",
+    colorClass: "text-amber-500 border-amber-500 bg-amber-500/10",
+    rewards: ["Access to advanced discovery tools", "Security asset mapping privileges"]
+  },
+  {
+    id: "vulnerability-hunter",
+    name: "Vulnerability Hunter",
+    description: "Located critical vulnerabilities during routine scanning sessions",
+    icon: <Scan className="h-6 w-6" />,
+    level: 4,
+    isUnlocked: false,
+    progress: 35,
+    category: "scanning",
+    colorClass: "text-teal-500 border-teal-500 bg-teal-500/10",
+    rewards: ["Priority vulnerability reporting", "Scanner optimization access"]
+  },
+  {
+    id: "oauth-implementer",
+    name: "OAuth Implementer",
+    description: "Successfully integrated secure OAuth flows into applications",
+    icon: <Key className="h-6 w-6" />,
+    level: 5,
+    isUnlocked: false,
+    progress: 15,
+    category: "implementation",
+    colorClass: "text-cyan-500 border-cyan-500 bg-cyan-500/10",
+    rewards: ["Identity Provider certification", "API security champion badge"]
+  },
+  {
+    id: "jwt-specialist",
+    name: "JWT Specialist",
+    description: "Demonstrated expertise in secure JWT implementation best practices",
+    icon: <Key className="h-6 w-6" />,
+    level: 4,
+    isUnlocked: false,
+    progress: 10,
+    category: "implementation",
+    colorClass: "text-cyan-500 border-cyan-500 bg-cyan-500/10",
+    rewards: ["Token security review privileges", "Access to advanced token rotations methods"]
+  },
+  {
+    id: "security-protector",
+    name: "Security Protector",
+    description: "Achieved excellence in implementing multiple security measures for deaf users",
+    icon: <Star className="h-6 w-6" />,
+    level: 5,
+    isUnlocked: false,
+    progress: 5,
+    category: "advanced",
+    colorClass: "text-pink-500 border-pink-500 bg-pink-500/10",
+    rewards: ["NegraRosa security advisory board consideration", "Advanced security clearance level"]
+  },
+  {
+    id: "business-defender",
+    name: "Business Defender",
+    description: "Successfully implemented comprehensive security measures for a deaf-owned business",
+    icon: <ThumbsUp className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 40,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Business security assessment", "Risk mitigation consultation"]
+  },
+  {
+    id: "payment-guardian",
+    name: "Payment Guardian",
+    description: "Secured payment systems for deaf entrepreneurs with enhanced verification protocols",
+    icon: <ThumbsUp className="h-6 w-6" />,
+    level: 4,
+    isUnlocked: false,
+    progress: 25,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Payment verification toolkit", "Financial security monitoring access"]
+  },
+  {
+    id: "data-protector",
+    name: "Data Protector",
+    description: "Implemented data protection measures for deaf-owned businesses' sensitive information",
+    icon: <FileCheck className="h-6 w-6" />,
+    level: 4,
+    isUnlocked: false,
+    progress: 30,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Data encryption toolkit", "Privacy compliance certification"]
+  },
+  {
+    id: "blockchain-guardian",
+    name: "Blockchain Guardian",
+    description: "Implemented secure smart contracts and Web3 protocols for deaf entrepreneurs",
+    icon: <Code className="h-6 w-6" />,
+    level: 5,
+    isUnlocked: false,
+    progress: 15,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Smart contract security audit", "Decentralized identity toolkit"]
+  },
+  {
+    id: "web3-innovator",
+    name: "Web3 Innovator",
+    description: "Created secure decentralized applications that enhance accessibility for deaf users",
+    icon: <ThumbsUp className="h-6 w-6" />,
+    level: 4,
+    isUnlocked: false,
+    progress: 20,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Token-gated community access", "Blockchain security workshop"]
+  },
+  {
+    id: "wallet-defender",
+    name: "Wallet Defender",
+    description: "Protected cryptocurrency wallets with enhanced security measures for deaf business owners",
+    icon: <Lock className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 25,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Cold storage wallet setup guide", "Crypto transaction safety toolkit"]
+  },
+  {
+    id: "auth-protector",
+    name: "Auth Protector",
+    description: "Implemented secure authentication systems with password hashing and HTTPS for deaf businesses",
+    icon: <Key className="h-6 w-6" />,
+    level: 3,
+    isUnlocked: false,
+    progress: 35,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Authentication security audit", "Secure credential management guide"]
+  },
+  {
+    id: "decentralized-identity",
+    name: "Identity Innovator",
+    description: "Implemented decentralized identity verification systems for deaf users with neural processing",
+    icon: <Fingerprint className="h-6 w-6" />,
+    level: 5,
+    isUnlocked: false,
+    progress: 10,
+    category: "entrepreneur",
+    colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
+    rewards: ["Decentralized identity audit", "Neural verification consultation"]
+  }
+];
+
 export default function SecurityAchievementBadges({ userId }: SecurityAchievementBadgesProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
-  
-  // Simulated badges data
-  const badges: SecurityBadge[] = [
-    {
-      id: "identity-verified",
-      name: "Identity Guardian",
-      description: "Successfully verified your identity through multiple verification methods",
-      icon: <Shield className="h-6 w-6" />,
-      level: 1, 
-      isUnlocked: true,
-      progress: 100,
-      category: "verification",
-      colorClass: "text-green-500 border-green-500 bg-green-500/10",
-      rewards: ["Access to enhanced security features", "Verification badge on community posts"],
-      dateEarned: "2023-08-15"
-    },
-    {
-      id: "sign-auth-master",
-      name: "Sign Authentication Master",
-      description: "Completed sign language authentication setup and successfully used it for login",
-      icon: <Fingerprint className="h-6 w-6" />,
-      level: 2,
-      isUnlocked: true,
-      progress: 100,
-      category: "authentication",
-      colorClass: "text-blue-500 border-blue-500 bg-blue-500/10",
-      rewards: ["Unlock gesture-based quick auth", "Security clearance level 2"],
-      dateEarned: "2023-09-02"
-    },
-    {
-      id: "community-contributor",
-      name: "Community Contributor",
-      description: "Actively participated in the deaf security community and contributed to discussions",
-      icon: <Users className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 75,
-      category: "community",
-      colorClass: "text-purple-500 border-purple-500 bg-purple-500/10",
-      rewards: ["Access to exclusive community forums", "Ability to create community security guides"]
-    },
-    {
-      id: "quick-responder",
-      name: "Alert Responder",
-      description: "Responded to security alerts within a 12-hour window multiple times",
-      icon: <Zap className="h-6 w-6" />,
-      level: 1,
-      isUnlocked: true,
-      progress: 100,
-      category: "verification",
-      colorClass: "text-amber-500 border-amber-500 bg-amber-500/10",
-      rewards: ["Priority support access", "Early warning system access"],
-      dateEarned: "2023-07-20"
-    },
-    {
-      id: "security-educator",
-      name: "Security Educator",
-      description: "Completed the full security education course for deaf-first approaches",
-      icon: <Award className="h-6 w-6" />,
-      level: 4,
-      isUnlocked: false,
-      progress: 60,
-      category: "education",
-      colorClass: "text-indigo-500 border-indigo-500 bg-indigo-500/10",
-      rewards: ["Ability to create security training materials", "Featured contributor status"]
-    },
-    {
-      id: "code-contributor",
-      name: "Code Contributor",
-      description: "Contributed to the open source deaf-first security framework",
-      icon: <Code className="h-6 w-6" />,
-      level: 5,
-      isUnlocked: false,
-      progress: 30,
-      category: "contribution",
-      colorClass: "text-rose-500 border-rose-500 bg-rose-500/10",
-      rewards: ["Named recognition in the project", "Developer badge in community"]
-    },
-    {
-      id: "multi-factor-master",
-      name: "Multi-Factor Master",
-      description: "Set up all available security authentication methods for your account",
-      icon: <Lock className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 40,
-      category: "authentication",
-      colorClass: "text-cyan-500 border-cyan-500 bg-cyan-500/10",
-      rewards: ["Ultra-secure account status", "Simplified authentication process"]
-    },
-    {
-      id: "early-adopter",
-      name: "Early Adopter",
-      description: "One of the first 100 community members to use the NegraRosa security framework",
-      icon: <Star className="h-6 w-6" />,
-      level: 2,
-      isUnlocked: true,
-      progress: 100,
-      category: "community",
-      colorClass: "text-yellow-500 border-yellow-500 bg-yellow-500/10",
-      rewards: ["Exclusive early adopter badge", "Beta access to new features"],
-      dateEarned: "2023-05-10"
-    },
-    {
-      id: "verification-streak",
-      name: "Verification Streak",
-      description: "Completed identity verification checks for 5 consecutive months",
-      icon: <Clock className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 80,
-      category: "verification",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Extended verification periods", "Trusted member status"]
-    },
-    {
-      id: "content-contributor",
-      name: "Content Contributor",
-      description: "Uploaded helpful security resource materials for the deaf community",
-      icon: <Upload className="h-6 w-6" />,
-      level: 2,
-      isUnlocked: false,
-      progress: 20,
-      category: "contribution",
-      colorClass: "text-emerald-500 border-emerald-500 bg-emerald-500/10",
-      rewards: ["Featured content creator tag", "Content distribution priority"]
-    },
-    {
-      id: "asset-discovery-pioneer",
-      name: "Asset Discovery Pioneer",
-      description: "Successfully identified and cataloged security risks in the network",
-      icon: <Search className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 45,
-      category: "discovery",
-      colorClass: "text-amber-500 border-amber-500 bg-amber-500/10",
-      rewards: ["Access to advanced discovery tools", "Security asset mapping privileges"]
-    },
-    {
-      id: "vulnerability-hunter",
-      name: "Vulnerability Hunter",
-      description: "Located critical vulnerabilities during routine scanning sessions",
-      icon: <Scan className="h-6 w-6" />,
-      level: 4,
-      isUnlocked: false,
-      progress: 35,
-      category: "scanning",
-      colorClass: "text-teal-500 border-teal-500 bg-teal-500/10",
-      rewards: ["Priority vulnerability reporting", "Scanner optimization access"]
-    },
-    {
-      id: "oauth-implementer",
-      name: "OAuth Implementer",
-      description: "Successfully integrated secure OAuth flows into applications",
-      icon: <Key className="h-6 w-6" />,
-      level: 5,
-      isUnlocked: false,
-      progress: 15,
-      category: "implementation",
-      colorClass: "text-cyan-500 border-cyan-500 bg-cyan-500/10",
-      rewards: ["Identity Provider certification", "API security champion badge"]
-    },
-    {
-      id: "jwt-specialist",
-      name: "JWT Specialist",
-      description: "Demonstrated expertise in secure JWT implementation best practices",
-      icon: <Key className="h-6 w-6" />,
-      level: 4,
-      isUnlocked: false,
-      progress: 10,
-      category: "implementation",
-      colorClass: "text-cyan-500 border-cyan-500 bg-cyan-500/10",
-      rewards: ["Token security review privileges", "Access to advanced token rotations methods"]
-    },
-    {
-      id: "security-protector",
-      name: "Security Protector",
-      description: "Achieved excellence in implementing multiple security measures for deaf users",
-      icon: <Star className="h-6 w-6" />,
-      level: 5,
-      isUnlocked: false,
-      progress: 5,
-      category: "advanced",
-      colorClass: "text-pink-500 border-pink-500 bg-pink-500/10",
-      rewards: ["NegraRosa security advisory board consideration", "Advanced security clearance level"]
-    },
-    {
-      id: "business-defender",
-      name: "Business Defender",
-      description: "Successfully implemented comprehensive security measures for a deaf-owned business",
-      icon: <ThumbsUp className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 40,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Business security assessment", "Risk mitigation consultation"]
-    },
-    {
-      id: "payment-guardian",
-      name: "Payment Guardian",
-      description: "Secured payment systems for deaf entrepreneurs with enhanced verification protocols",
-      icon: <ThumbsUp className="h-6 w-6" />,
-      level: 4,
-      isUnlocked: false,
-      progress: 25,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Payment verification toolkit", "Financial security monitoring access"]
-    },
-    {
-      id: "data-protector",
-      name: "Data Protector",
-      description: "Implemented data protection measures for deaf-owned businesses' sensitive information",
-      icon: <FileCheck className="h-6 w-6" />,
-      level: 4,
-      isUnlocked: false,
-      progress: 30,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Data encryption toolkit", "Privacy compliance certification"]
-    },
-    {
-      id: "blockchain-guardian",
-      name: "Blockchain Guardian",
-      description: "Implemented secure smart contracts and Web3 protocols for deaf entrepreneurs",
-      icon: <Code className="h-6 w-6" />,
-      level: 5,
-      isUnlocked: false,
-      progress: 15,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Smart contract security audit", "Decentralized identity toolkit"]
-    },
-    {
-      id: "web3-innovator",
-      name: "Web3 Innovator",
-      description: "Created secure decentralized applications that enhance accessibility for deaf users",
-      icon: <ThumbsUp className="h-6 w-6" />,
-      level: 4,
-      isUnlocked: false, 
-      progress: 20,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Token-gated community access", "Blockchain security workshop"]
-    },
-    {
-      id: "wallet-defender",
-      name: "Wallet Defender",
-      description: "Protected cryptocurrency wallets with enhanced security measures for deaf business owners",
-      icon: <Lock className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 25,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Cold storage wallet setup guide", "Crypto transaction safety toolkit"]
-    },
-    {
-      id: "auth-protector",
-      name: "Auth Protector",
-      description: "Implemented secure authentication systems with password hashing and HTTPS for deaf businesses",
-      icon: <Key className="h-6 w-6" />,
-      level: 3,
-      isUnlocked: false,
-      progress: 35,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Authentication security audit", "Secure credential management guide"]
-    },
-    {
-      id: "decentralized-identity",
-      name: "Identity Innovator",
-      description: "Implemented decentralized identity verification systems for deaf users with neural processing",
-      icon: <Fingerprint className="h-6 w-6" />,
-      level: 5,
-      isUnlocked: false,
-      progress: 10,
-      category: "entrepreneur",
-      colorClass: "text-orange-500 border-orange-500 bg-orange-500/10",
-      rewards: ["Decentralized identity audit", "Neural verification consultation"]
+
+  // Performance Optimization: Single-pass O(N) calculation for score and category stats,
+  // avoiding 30+ array filter/reduce operations and allocations per render.
+  const { securityScore, categoryStats } = useMemo(() => {
+    let currentScore = 0;
+    const catMap = new Map<string, { count: number; completed: number; score: number }>();
+
+    for (const cat of CATEGORIES) {
+      catMap.set(cat, { count: 0, completed: 0, score: 0 });
     }
-  ];
-  
-  // Filter badges by category
-  const filteredBadges = selectedCategory === "all" 
-    ? badges 
-    : badges.filter(badge => badge.category === selectedCategory);
-  
-  // Sort badges: unlocked first, then by progress percentage
-  const sortedBadges = [...filteredBadges].sort((a, b) => {
-    if (a.isUnlocked && !b.isUnlocked) return -1;
-    if (!a.isUnlocked && b.isUnlocked) return 1;
-    return b.progress - a.progress;
-  });
-  
-  // Calculate overall security score based on badges
-  const totalPossibleScore = badges.length * 100;
-  const currentScore = badges.reduce((sum, badge) => sum + badge.progress, 0);
-  const securityScore = Math.round((currentScore / totalPossibleScore) * 100);
-  
-  // Calculate category percentages
-  const categories = ["verification", "authentication", "community", "education", "contribution", "discovery", "scanning", "implementation", "advanced", "entrepreneur"];
-  const categoryStats = categories.map(cat => {
-    const catBadges = badges.filter(b => b.category === cat);
-    const catTotal = catBadges.length * 100;
-    const catScore = catBadges.reduce((sum, badge) => sum + badge.progress, 0);
-    const percentage = catTotal > 0 ? Math.round((catScore / catTotal) * 100) : 0;
-    
-    return {
-      name: cat,
-      percentage,
-      count: catBadges.length,
-      completed: catBadges.filter(b => b.isUnlocked).length
-    };
-  });
-  
+
+    for (let i = 0; i < INITIAL_BADGES.length; i++) {
+      const badge = INITIAL_BADGES[i];
+      currentScore += badge.progress;
+
+      const catEntry = catMap.get(badge.category);
+      if (catEntry) {
+        catEntry.count += 1;
+        catEntry.score += badge.progress;
+        if (badge.isUnlocked) {
+          catEntry.completed += 1;
+        }
+      }
+    }
+
+    const totalPossibleScore = INITIAL_BADGES.length * 100;
+    const overallScore = Math.round((currentScore / totalPossibleScore) * 100);
+
+    const stats = CATEGORIES.map((catName) => {
+      const entry = catMap.get(catName) || { count: 0, completed: 0, score: 0 };
+      const catTotal = entry.count * 100;
+      const percentage = catTotal > 0 ? Math.round((entry.score / catTotal) * 100) : 0;
+
+      return {
+        name: catName,
+        percentage,
+        count: entry.count,
+        completed: entry.completed,
+      };
+    });
+
+    return { securityScore: overallScore, categoryStats: stats };
+  }, []);
+
+  // Performance Optimization: Memoize category filter & sorting to prevent redundant execution
+  // when switching view mode (grid/list) or when parent re-renders.
+  const sortedBadges = useMemo(() => {
+    const filtered = selectedCategory === "all"
+      ? INITIAL_BADGES
+      : INITIAL_BADGES.filter((badge) => badge.category === selectedCategory);
+
+    return [...filtered].sort((a, b) => {
+      if (a.isUnlocked && !b.isUnlocked) return -1;
+      if (!a.isUnlocked && b.isUnlocked) return 1;
+      return b.progress - a.progress;
+    });
+  }, [selectedCategory]);
+
   const getCategoryColor = (category: string) => {
     switch(category) {
       case "verification": return "text-green-500";
@@ -507,7 +538,7 @@ export default function SecurityAchievementBadges({ userId }: SecurityAchievemen
             All Badges
           </Button>
           
-          {categories.map(category => (
+          {CATEGORIES.map(category => (
             <Button 
               key={category}
               variant={selectedCategory === category ? "default" : "outline"} 
