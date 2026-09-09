@@ -287,6 +287,9 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  // Secondary index maps for O(1) user lookups instead of O(N) Array.from iterations
+  private usersByUsername: Map<string, User>;
+  private usersByExternalId: Map<string, User>;
   private verifications: Map<number, Verification>;
   private reputations: Map<number, Reputation>;
   private transactions: Map<number, Transaction>;
@@ -372,6 +375,8 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.users = new Map();
+    this.usersByUsername = new Map();
+    this.usersByExternalId = new Map();
     this.verifications = new Map();
     this.reputations = new Map();
     this.transactions = new Map();
@@ -471,15 +476,13 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    // Bolt ⚡ performance optimization: Constant time O(1) index lookup instead of O(N) array search
+    return this.usersByUsername.get(username);
   }
 
   async getUserByExternalId(externalId: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.externalId === externalId,
-    );
+    // Bolt ⚡ performance optimization: Constant time O(1) index lookup instead of O(N) array search
+    return this.usersByExternalId.get(externalId);
   }
   
   async createUserFromAuth0(userData: {
@@ -505,6 +508,12 @@ export class MemStorage implements IStorage {
       lastLogin: now
     };
     this.users.set(id, user);
+    if (user.username) {
+      this.usersByUsername.set(user.username, user);
+    }
+    if (user.externalId) {
+      this.usersByExternalId.set(user.externalId, user);
+    }
     
     // Initialize reputation for new user
     await this.createReputation({
@@ -537,6 +546,12 @@ export class MemStorage implements IStorage {
     };
     
     this.users.set(userId, updatedUser);
+    if (updatedUser.username) {
+      this.usersByUsername.set(updatedUser.username, updatedUser);
+    }
+    if (updatedUser.externalId) {
+      this.usersByExternalId.set(updatedUser.externalId, updatedUser);
+    }
     return updatedUser;
   }
   
@@ -594,6 +609,12 @@ export class MemStorage implements IStorage {
       createdAt: now
     };
     this.users.set(id, user);
+    if (user.username) {
+      this.usersByUsername.set(user.username, user);
+    }
+    if (user.externalId) {
+      this.usersByExternalId.set(user.externalId, user);
+    }
     
     // Initialize reputation for new user
     await this.createReputation({
