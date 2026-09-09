@@ -22,7 +22,8 @@ router.get('/', auth0Service.checkJwt, auth0Service.checkPermissions(['read:user
     return res.json(sanitizedUsers);
   } catch (error: any) {
     console.error('Error fetching users:', error);
-    return res.status(500).json({ message: 'Error fetching users', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error fetching users' });
   }
 });
 
@@ -59,7 +60,8 @@ router.get('/:id', auth0Service.checkJwt, async (req: Request, res: Response) =>
     return res.json(userWithoutPassword);
   } catch (error: any) {
     console.error('Error fetching user:', error);
-    return res.status(500).json({ message: 'Error fetching user', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error fetching user' });
   }
 });
 
@@ -116,7 +118,8 @@ router.post('/', auth0Service.checkJwt, auth0Service.checkPermissions(['create:u
     });
   } catch (error: any) {
     console.error('Error creating user:', error);
-    return res.status(500).json({ message: 'Error creating user', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error creating user' });
   }
 });
 
@@ -171,7 +174,8 @@ router.put('/:id', auth0Service.checkJwt, async (req: Request, res: Response) =>
     return res.json(userWithoutPassword);
   } catch (error: any) {
     console.error('Error updating user:', error);
-    return res.status(500).json({ message: 'Error updating user', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error updating user' });
   }
 });
 
@@ -210,7 +214,8 @@ router.delete('/:id', auth0Service.checkJwt, auth0Service.checkPermissions(['del
     return res.status(204).end();
   } catch (error: any) {
     console.error('Error deleting user:', error);
-    return res.status(500).json({ message: 'Error deleting user', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error deleting user' });
   }
 });
 
@@ -255,7 +260,8 @@ router.get('/:id/permissions', auth0Service.checkJwt, async (req: Request, res: 
     return res.json({ permissions: permissionsResult.permissions || [] });
   } catch (error: any) {
     console.error('Error fetching user permissions:', error);
-    return res.status(500).json({ message: 'Error fetching user permissions', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error fetching user permissions' });
   }
 });
 
@@ -300,7 +306,8 @@ router.get('/:id/roles', auth0Service.checkJwt, async (req: Request, res: Respon
     return res.json({ roles: rolesResult.roles || [] });
   } catch (error: any) {
     console.error('Error fetching user roles:', error);
-    return res.status(500).json({ message: 'Error fetching user roles', error: error.message });
+    // Do not leak raw internal error message details to clients
+    return res.status(500).json({ message: 'Error fetching user roles' });
   }
 });
 
