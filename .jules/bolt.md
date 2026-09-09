@@ -1,3 +1,0 @@
-## 2025-05-18 - MemStorage User Lookup Indexing
-**Learning:** In-memory storage implementations using JavaScript `Map<number, User>` previously relied on `Array.from(map.values()).find(...)` for non-primary key queries (`getUserByUsername`, `getUserByExternalId`). This resulted in linear O(N) array allocations and searches on every authentication and user lookup request. By maintaining secondary index maps (`usersByUsername`, `usersByExternalId`), lookups improve from O(N) to O(1) constant time, eliminating garbage collection overhead from temporary arrays.
-**Action:** Always maintain secondary Map indexes for frequently queried entity fields in in-memory storage classes.
