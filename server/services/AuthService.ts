@@ -27,8 +27,12 @@ export class AuthService {
   private biometricData: Map<number, BiometricData> = new Map();
 
   constructor() {
-    // In a production environment, these should be loaded from environment variables
-    this.tokenSecret = process.env.JWT_SECRET || "negrarosa-inclusive-security-framework-secret";
+    // SECURITY: Ensure JWT secret is provided in production to prevent authentication bypass/token forgery.
+    // Hardcoded secrets in production pose a critical vulnerability as tokens can be forged by attackers.
+    if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+      throw new Error("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is required in production.");
+    }
+    this.tokenSecret = process.env.JWT_SECRET || "negrarosa-dev-secret-do-not-use-in-production";
     this.tokenExpiry = "24h"; // Token expires in 24 hours
   }
 
