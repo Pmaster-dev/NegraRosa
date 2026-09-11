@@ -2450,10 +2450,12 @@ CSAF: ${baseUrl}/.well-known/csaf/provider-metadata.json
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      // Create webhook payload with cryptographic signature
+      // Create webhook payload with cryptographic signature using environment secret salt
+      // Security concern: hardcoded secret salt exposes signature generation to replay/forgery attacks.
+      const secretSalt = process.env.WEBHOOK_SECRET_SALT || process.env.JWT_SECRET || "idsec_secret_salt";
       const payloadId = uuidv4();
       const payloadString = JSON.stringify(data);
-      const signature = crypto.createHmac("sha256", "idsec_secret_salt").update(payloadString).digest("hex");
+      const signature = crypto.createHmac("sha256", secretSalt).update(payloadString).digest("hex");
       
       const payload = {
         id: payloadId,
