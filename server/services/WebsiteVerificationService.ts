@@ -33,12 +33,50 @@ export class WebsiteVerificationService {
   private cachedResults: Map<string, { result: VerificationResult, timestamp: number }> = new Map();
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
   
+  // SECURITY: Prevent SSRF by validating that URLs do not point to local/private networks or cloud metadata
+  private isSafeUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+      const host = parsed.hostname.toLowerCase();
+      if (
+        host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1' || host === '[::1]' ||
+        host === '169.254.169.254' || host.endsWith('.internal') || host.endsWith('.local') ||
+        /^10\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+        /^192\.168\./.test(host) || /^169\.254\./.test(host)
+      ) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Verify if a website exists and represents a real working project
    */
   async verifyWebsite(url: string): Promise<VerificationResult> {
     // Normalize URL
     url = this.normalizeUrl(url);
+
+    // SECURITY: Reject internal or private addresses to mitigate SSRF risks
+    if (!this.isSafeUrl(url)) {
+      return {
+        success: false,
+        score: 0,
+        details: {
+          hasMultiplePages: false,
+          hasRealContent: false,
+          hasInteractiveElements: false,
+          hasContactInfo: false,
+          pageLoadTime: 0,
+          pageSize: 0,
+          metaTagsScore: 0
+        },
+        message: 'Invalid or restricted website URL (private/internal addresses are not allowed for security reasons)'
+      };
+    }
     
     // Check cache first
     const cached = this.cachedResults.get(url);
