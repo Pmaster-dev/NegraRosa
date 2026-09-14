@@ -243,9 +243,16 @@ router.get('/:id/document', auth0Service.checkJwt, async (req: Request, res: Res
     if (!verification.data || !verification.data.path) {
       return res.status(404).json({ message: 'No document found for this verification' });
     }
+
+    // Security check: Prevent path traversal attacks by ensuring the file path resides strictly within uploadDir
+    const uploadDir = path.resolve(__dirname, '../../../uploads');
+    const absoluteDocPath = path.resolve(verification.data.path);
+    if (!absoluteDocPath.startsWith(uploadDir + path.sep) && absoluteDocPath !== uploadDir) {
+      return res.status(403).json({ message: 'Access denied: invalid document path' });
+    }
     
-    // Send file
-    res.sendFile(verification.data.path, { root: '/' });
+    // Send file securely using resolved path
+    res.sendFile(absoluteDocPath);
   } catch (error) {
     console.error('Document retrieval error:', error);
     res.status(500).json({ message: 'Server error retrieving document' });
