@@ -1,15 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
-import express from "express";
+import { describe, it, expect } from "vitest";
 import crypto from "crypto";
 
-// Helper function that mirrors route signing logic
+// Helper function mirroring webhook signature logic in server/routes.ts
 function computeWebhookSignature(data: any, customSecret?: string): string {
   const hmacSecret = customSecret || process.env.IDSEC_HMAC_SECRET || "idsec_secret_salt";
   const payloadString = JSON.stringify(data);
   return crypto.createHmac("sha256", hmacSecret).update(payloadString).digest("hex");
 }
 
-describe("Webhook HMAC signature endpoint calculation", () => {
+describe("Webhook HMAC signature calculation", () => {
   it("should calculate signature using IDSEC_HMAC_SECRET when set", () => {
     const data = { event: "webhook.test", id: 1 };
     const secret = "super_secret_env_key";
