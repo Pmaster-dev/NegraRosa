@@ -2450,10 +2450,12 @@ CSAF: ${baseUrl}/.well-known/csaf/provider-metadata.json
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      // Create webhook payload with cryptographic signature
+      // SECURITY: Avoid hardcoding cryptographic HMAC secret salts in source code.
+      // Load secret from environment variable IDSEC_HMAC_SECRET with a fallback for local development.
+      const hmacSecret = process.env.IDSEC_HMAC_SECRET || "idsec_secret_salt";
       const payloadId = uuidv4();
       const payloadString = JSON.stringify(data);
-      const signature = crypto.createHmac("sha256", "idsec_secret_salt").update(payloadString).digest("hex");
+      const signature = crypto.createHmac("sha256", hmacSecret).update(payloadString).digest("hex");
       
       const payload = {
         id: payloadId,
