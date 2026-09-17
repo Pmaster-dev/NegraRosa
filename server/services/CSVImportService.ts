@@ -29,6 +29,19 @@ export class CSVImportService {
           errors.push(`Row ${i + 1}: Missing required fields`);
           continue;
         }
+
+        // SECURITY: Input Validation - Validate URL format and restrict to HTTP/HTTPS protocols
+        // to prevent SSRF (Server-Side Request Forgery) and scheme injection (e.g., javascript:, file:)
+        try {
+          const parsedUrl = new URL(url);
+          if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+            errors.push(`Row ${i + 1}: Invalid URL protocol. Only HTTP and HTTPS are allowed.`);
+            continue;
+          }
+        } catch {
+          errors.push(`Row ${i + 1}: Invalid URL format`);
+          continue;
+        }
         
         // Use provided userId or default
         const userId = userIdStr ? parseInt(userIdStr) : defaultUserId;
