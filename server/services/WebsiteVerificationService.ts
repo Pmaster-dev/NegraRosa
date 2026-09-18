@@ -34,11 +34,54 @@ export class WebsiteVerificationService {
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
   
   /**
+   * Check if a URL targets private/internal IP ranges (SSRF protection)
+   */
+  private isPrivateUrl(urlStr: string): boolean {
+    try {
+      const parsed = new URL(urlStr);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return true;
+      const host = parsed.hostname.toLowerCase();
+      return (
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host === '0.0.0.0' ||
+        host === '::1' ||
+        host.endsWith('.local') ||
+        host.endsWith('.internal') ||
+        /^10\./.test(host) ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^169\.254\./.test(host)
+      );
+    } catch {
+      return true;
+    }
+  }
+
+  /**
    * Verify if a website exists and represents a real working project
    */
   async verifyWebsite(url: string): Promise<VerificationResult> {
     // Normalize URL
     url = this.normalizeUrl(url);
+
+    // Prevent SSRF by rejecting requests to private or internal addresses
+    if (this.isPrivateUrl(url)) {
+      return {
+        success: false,
+        score: 0,
+        details: {
+          hasMultiplePages: false,
+          hasRealContent: false,
+          hasInteractiveElements: false,
+          hasContactInfo: false,
+          pageLoadTime: 0,
+          pageSize: 0,
+          metaTagsScore: 0
+        },
+        message: 'Invalid URL or private network address is not allowed',
+      };
+    }
     
     // Check cache first
     const cached = this.cachedResults.get(url);
@@ -214,6 +257,7 @@ export class WebsiteVerificationService {
         // Analyze up to 3 more pages
         for (const link of internalLinks) {
           try {
+            if (this.isPrivateUrl(link)) continue; // SSRF check on internal crawled links
             const pageResponse = await axios.get(link, { timeout: 5000 });
             if (pageResponse.status === 200) {
               totalPages++;
