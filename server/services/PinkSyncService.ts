@@ -85,8 +85,12 @@ export class PinkSyncService {
   private operations: Map<string, SyncOperation> = new Map();
   private conflicts: Map<string, SyncConflict[]> = new Map();
   private syncVersions: Map<number, number> = new Map(); // userId -> version
+  // SECURITY FIX: Maintain a persistent key for this service instance when PINKSYNC_ENCRYPTION_KEY is omitted
+  // to avoid key mismatch between encryption and decryption calls.
+  private encryptionKey: string;
   
   constructor() {
+    this.encryptionKey = process.env.PINKSYNC_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
     console.log('PinkSync service initialized');
   }
   
@@ -561,9 +565,8 @@ export class PinkSyncService {
       const encryptedData = { ...data };
       const encryptedFields: string[] = [];
       
-      // Use crypto for field-level encryption
-      const encryptionKey = process.env.PINKSYNC_ENCRYPTION_KEY || 
-        crypto.randomBytes(32).toString('hex');
+      // Use crypto for field-level encryption using consistent instance key
+      const encryptionKey = this.encryptionKey;
       
       for (const field of fieldsToEncrypt) {
         if (encryptedData[field] !== undefined) {
@@ -614,8 +617,8 @@ export class PinkSyncService {
   ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       const decryptedData = { ...data };
-      const encryptionKey = process.env.PINKSYNC_ENCRYPTION_KEY || 
-        crypto.randomBytes(32).toString('hex');
+      // Use consistent instance encryption key for decryption
+      const encryptionKey = this.encryptionKey;
       
       for (const field of encryptedFields) {
         if (decryptedData[field] !== undefined) {
