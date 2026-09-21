@@ -1,28 +1,37 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { pasetoService } from '../../services/PasetoService';
 import { deafAuthService } from '../../services/DeafAuthService';
 import { pinkSyncService } from '../../services/PinkSyncService';
 import { fibonorseService } from '../../services/FibonorseService';
 import { z } from 'zod';
 
-/**
- * DeafAuth API Routes
- * 
- * Foundation authentication endpoints for DeafAuth (github.com/deafauth/deafauth),
- * PinkSync, and Fibonorse using PASETO tokens.
- * 
- * SECURITY NOTE: In production, implement rate limiting on all authentication
- * endpoints to prevent brute force attacks. Consider using express-rate-limit
- * or similar middleware. Example configuration:
- * 
- * const rateLimit = require('express-rate-limit');
- * const authLimiter = rateLimit({
- *   windowMs: 15 * 60 * 1000, // 15 minutes
- *   max: 100, // limit each IP to 100 requests per windowMs
- *   message: 'Too many authentication attempts, please try again later'
- * });
- * router.use('/authenticate', authLimiter);
- */
+// Security: In-memory rate limiting to prevent brute-force attacks on auth endpoints
+function createRateLimiter(windowMs: number = 15 * 60 * 1000, max: number = 100) {
+  const requests = new Map<string, { count: number; resetTime: number }>();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, record] of requests.entries()) {
+      if (now > record.resetTime) requests.delete(ip);
+    }
+  }, windowMs).unref();
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || '127.0.0.1';
+    const now = Date.now();
+    const record = requests.get(ip);
+    if (!record || now > record.resetTime) {
+      requests.set(ip, { count: 1, resetTime: now + windowMs });
+      return next();
+    }
+    if (record.count >= max) {
+      return res.status(429).json({ success: false, error: 'Too many authentication attempts, please try again later' });
+    }
+    record.count++;
+    next();
+  };
+}
+
+const authRateLimiter = createRateLimiter(15 * 60 * 1000, 100);
 
 const router = Router();
 
@@ -128,7 +137,7 @@ router.get('/config', (req: Request, res: Response) => {
  * @desc Authenticate with DeafAuth
  * @access Public
  */
-router.post('/deafauth/authenticate', async (req: Request, res: Response) => {
+router.post('/deafauth/authenticate', authRateLimiter, async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       userId: z.number().optional(),
@@ -600,7 +609,7 @@ router.post('/pinksync/verify-token', async (req: Request, res: Response) => {
  * @desc Authenticate with Fibonorse
  * @access Public
  */
-router.post('/fibonorse/authenticate', async (req: Request, res: Response) => {
+router.post('/fibonorse/authenticate', authRateLimiter, async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       userId: z.number(),
