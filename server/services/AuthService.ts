@@ -27,7 +27,11 @@ export class AuthService {
   private biometricData: Map<number, BiometricData> = new Map();
 
   constructor() {
-    // In a production environment, these should be loaded from environment variables
+    // SECURITY RISK: Using a fallback default key allows attackers to forge valid JWT tokens.
+    // In production environments, JWT_SECRET must be explicitly defined in environment variables.
+    if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+      throw new Error("CRITICAL SECURITY ERROR: JWT_SECRET environment variable must be set in production.");
+    }
     this.tokenSecret = process.env.JWT_SECRET || "negrarosa-inclusive-security-framework-secret";
     this.tokenExpiry = "24h"; // Token expires in 24 hours
   }
