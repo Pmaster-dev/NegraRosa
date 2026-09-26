@@ -3,9 +3,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
-  "serialNumber": "urn:uuid:805a2911-159a-4826-b3ef-7368a6d73d50",
+  "serialNumber": "urn:uuid:ac702e66-ae9e-475b-b8e6-4f5fec45f4e8",
   "metadata": {
-    "timestamp": "2026-09-26T16:30:11.544Z",
+    "timestamp": "2026-09-26T16:35:52.748Z",
     "tools": {
       "components": [
         {
@@ -19300,8 +19300,9 @@
     {
       "type": "library",
       "name": "postcss-selector-parser",
-      "version": "6.1.2",
-      "bom-ref": "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.2",
+      "version": "6.1.4",
+      "bom-ref": "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.4",
+      "description": "Selector parser with built in methods for working with selector strings.",
       "licenses": [
         {
           "license": {
@@ -19310,7 +19311,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/postcss-selector-parser@6.1.2",
+      "purl": "pkg:npm/postcss-selector-parser@6.1.4",
       "externalReferences": [
         {
           "url": "git+https://github.com/postcss/postcss-selector-parser.git",
@@ -19328,12 +19329,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.1.2.tgz",
+          "url": "https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.1.4.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "43ca907cf899f931ceff766b3ab3b470924a7e96026a0b4c5245db9c47e68148f05e0eb3fd605e3b24bd00f0413c24d288357eb384b0406bbcc85b2231122e76"
+              "content": "6c8a092ce9a308ed52f57758fc3727479849c6fac38abd4f6c60a1af35c6defc34fc53a58b2fdf037766761438e3591a87880abfe4f07241b37b1eb0352e5c9d"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -36968,7 +36969,7 @@
         "negrarosa-security-framework@1.0.0|postcss-js@4.0.1",
         "negrarosa-security-framework@1.0.0|postcss-load-config@4.0.2",
         "negrarosa-security-framework@1.0.0|postcss-nested@6.2.0",
-        "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.2",
+        "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.4",
         "negrarosa-security-framework@1.0.0|postcss@8.5.10",
         "negrarosa-security-framework@1.0.0|resolve@1.22.8",
         "negrarosa-security-framework@1.0.0|sucrase@3.35.0"
@@ -38419,12 +38420,12 @@
     {
       "ref": "negrarosa-security-framework@1.0.0|postcss-nested@6.2.0",
       "dependsOn": [
-        "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.2",
+        "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.4",
         "negrarosa-security-framework@1.0.0|postcss@8.5.10"
       ]
     },
     {
-      "ref": "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.2",
+      "ref": "negrarosa-security-framework@1.0.0|postcss-selector-parser@6.1.4",
       "dependsOn": [
         "negrarosa-security-framework@1.0.0|cssesc@3.0.0",
         "negrarosa-security-framework@1.0.0|util-deprecate@1.0.2"
