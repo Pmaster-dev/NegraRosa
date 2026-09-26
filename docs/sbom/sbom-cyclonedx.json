@@ -3,9 +3,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
-  "serialNumber": "urn:uuid:8efcef66-f537-4fc1-b823-dd840653f47f",
+  "serialNumber": "urn:uuid:805a2911-159a-4826-b3ef-7368a6d73d50",
   "metadata": {
-    "timestamp": "2026-09-20T02:04:25.269Z",
+    "timestamp": "2026-09-26T16:30:11.544Z",
     "tools": {
       "components": [
         {
@@ -29254,8 +29254,8 @@
     {
       "type": "library",
       "name": "websocket-driver",
-      "version": "0.7.4",
-      "bom-ref": "negrarosa-security-framework@1.0.0|websocket-driver@0.7.4",
+      "version": "0.7.5",
+      "bom-ref": "negrarosa-security-framework@1.0.0|websocket-driver@0.7.5",
       "author": "James Coglan",
       "description": "WebSocket protocol handler with pluggable I/O",
       "licenses": [
@@ -29266,7 +29266,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/websocket-driver@0.7.4",
+      "purl": "pkg:npm/websocket-driver@0.7.5",
       "externalReferences": [
         {
           "url": "git://github.com/faye/websocket-driver-node.git",
@@ -29284,12 +29284,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/websocket-driver/-/websocket-driver-0.7.4.tgz",
+          "url": "https://registry.npmjs.org/websocket-driver/-/websocket-driver-0.7.5.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "6f5eca783210563bdbd2cb2e4831767185d28368b3b65889e01f5676cb81e89f79daa08f2a69d5ab80f25b99a8b489971c30b57014ffd547b3ac956c2b0e738e"
+              "content": "64bdbeddcee4301748442333ea5f2340c1f2195c63f942fec5593be0e99b89c89ba1c6bcac76b5e4bf3a075f44e68875a4bf488bfba3e7882db08ad918ca3acc"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -38861,7 +38861,7 @@
     {
       "ref": "negrarosa-security-framework@1.0.0|faye-websocket@0.11.4",
       "dependsOn": [
-        "negrarosa-security-framework@1.0.0|websocket-driver@0.7.4"
+        "negrarosa-security-framework@1.0.0|websocket-driver@0.7.5"
       ]
     },
     {
@@ -39331,7 +39331,7 @@
       ]
     },
     {
-      "ref": "negrarosa-security-framework@1.0.0|websocket-driver@0.7.4",
+      "ref": "negrarosa-security-framework@1.0.0|websocket-driver@0.7.5",
       "dependsOn": [
         "negrarosa-security-framework@1.0.0|http-parser-js@0.5.10",
         "negrarosa-security-framework@1.0.0|safe-buffer@5.2.1",
