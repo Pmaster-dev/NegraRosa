@@ -1,5 +1,5 @@
 import axios from 'axios';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../storage';
 import { Client as NotionClient } from '@notionhq/client';
