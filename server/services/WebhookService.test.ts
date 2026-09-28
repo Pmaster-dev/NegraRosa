@@ -4,13 +4,19 @@ import { webhookService, WebhookPayload } from './WebhookService';
 
 describe('WebhookService', () => {
   const originalSecret = process.env.WEBHOOK_SECRET;
+  const originalNodeEnv = process.env.NODE_ENV;
 
   beforeEach(() => {
     process.env.WEBHOOK_SECRET = 'test_webhook_secret_12345';
   });
 
   afterEach(() => {
-    process.env.WEBHOOK_SECRET = originalSecret;
+    if (originalSecret !== undefined) {
+      process.env.WEBHOOK_SECRET = originalSecret;
+    } else {
+      delete process.env.WEBHOOK_SECRET;
+    }
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
   describe('generateSignature', () => {
@@ -64,8 +70,9 @@ describe('WebhookService', () => {
       expect(hmac1).not.toBe(hmac2);
     });
 
-    it('should throw an error if WEBHOOK_SECRET is not set', () => {
+    it('should throw an error if WEBHOOK_SECRET is not set in production environment', () => {
       delete process.env.WEBHOOK_SECRET;
+      process.env.NODE_ENV = 'production';
 
       const payload: WebhookPayload = {
         id: 'payload-1',
@@ -75,7 +82,7 @@ describe('WebhookService', () => {
       };
 
       expect(() => webhookService.generateSignature(payload)).toThrow(
-        'WEBHOOK_SECRET environment variable must be set'
+        'WEBHOOK_SECRET environment variable is required in production'
       );
     });
   });

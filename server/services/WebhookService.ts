@@ -293,9 +293,9 @@ export class WebhookService {
   public generateSignature(payload: WebhookPayload): string {
     const timestamp = Date.now().toString();
     const payloadStr = JSON.stringify(payload);
-    const secret = process.env.WEBHOOK_SECRET;
-    if (!secret) {
-      throw new Error('WEBHOOK_SECRET environment variable must be set to generate webhook signatures');
+    const secret = process.env.WEBHOOK_SECRET || 'negrarosa_dev_webhook_secret_fallback';
+    if (!process.env.WEBHOOK_SECRET && process.env.NODE_ENV === 'production') {
+      throw new Error('WEBHOOK_SECRET environment variable is required in production');
     }
     const hmac = crypto
       .createHmac('sha256', secret)
