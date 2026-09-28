@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../storage';
 import { Client as NotionClient } from '@notionhq/client';
@@ -285,14 +286,22 @@ export class WebhookService {
   }
 
   /**
-   * Generate a signature for webhook payload verification
+   * Generate a secure HMAC-SHA256 signature for webhook payload verification
+   * SECURITY: Replaced non-cryptographic Base64 encoding with HMAC-SHA256 to prevent
+   * unauthorized webhook payload spoofing and tampering.
    */
-  private generateSignature(payload: WebhookPayload): string {
-    // In a real app, you would use a crypto library to generate HMAC signatures
-    // For this prototype, we're using a simple approach
-    const timestamp = new Date().getTime().toString();
+  public generateSignature(payload: WebhookPayload): string {
+    const timestamp = Date.now().toString();
     const payloadStr = JSON.stringify(payload);
-    return `${timestamp}.${Buffer.from(payloadStr).toString('base64')}`;
+    const secret = process.env.WEBHOOK_SECRET || 'negrarosa_dev_webhook_secret_fallback';
+    if (!process.env.WEBHOOK_SECRET && process.env.NODE_ENV === 'production') {
+      throw new Error('WEBHOOK_SECRET environment variable is required in production');
+    }
+    const hmac = crypto
+      .createHmac('sha256', secret)
+      .update(`${timestamp}.${payloadStr}`)
+      .digest('hex');
+    return `t=${timestamp},v1=${hmac}`;
   }
 
   /**
