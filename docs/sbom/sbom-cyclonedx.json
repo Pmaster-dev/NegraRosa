@@ -3,9 +3,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
-  "serialNumber": "urn:uuid:ca6ff7ec-b1b5-4742-8467-e156dce46c7f",
+  "serialNumber": "urn:uuid:7b129abc-a855-4670-9b63-7c7554421b54",
   "metadata": {
-    "timestamp": "2026-09-27T02:14:44.953Z",
+    "timestamp": "2026-09-28T04:14:55.999Z",
     "tools": {
       "components": [
         {
@@ -23990,8 +23990,8 @@
       "type": "library",
       "name": "grpc-js",
       "group": "@grpc",
-      "version": "1.9.15",
-      "bom-ref": "negrarosa-security-framework@1.0.0|@grpc/grpc-js@1.9.15",
+      "version": "1.9.16",
+      "bom-ref": "negrarosa-security-framework@1.0.0|@grpc/grpc-js@1.9.16",
       "author": "Google Inc.",
       "description": "gRPC Library for Node - pure JS implementation",
       "licenses": [
@@ -24002,7 +24002,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40grpc/grpc-js@1.9.15",
+      "purl": "pkg:npm/%40grpc/grpc-js@1.9.16",
       "externalReferences": [
         {
           "url": "git+https://github.com/grpc/grpc-node.git#master",
@@ -24020,12 +24020,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@grpc/grpc-js/-/grpc-js-1.9.15.tgz",
+          "url": "https://registry.npmjs.org/@grpc/grpc-js/-/grpc-js-1.9.16.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "9ea13b1dcd00cc8f9ebb35300c0cb4698e610a9d74afbdf880c191754faa38f5f45d271e23650badc5c1e54db149ce55916c1a9428f833b1b3080ca0665d8aa1"
+              "content": "c04e14b7fa252337caaa9eb7d57ac6fb06c5d2fd6f58537860bf45c970b62c9886df70ec57b3cbcd4463ac2bd8ffa8deda7b5d46478ba4f0e5bb349119a565b5"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -37910,7 +37910,7 @@
         "negrarosa-security-framework@1.0.0|@firebase/logger@0.5.0",
         "negrarosa-security-framework@1.0.0|@firebase/util@1.15.0",
         "negrarosa-security-framework@1.0.0|@firebase/webchannel-wrapper@1.0.5",
-        "negrarosa-security-framework@1.0.0|@grpc/grpc-js@1.9.15",
+        "negrarosa-security-framework@1.0.0|@grpc/grpc-js@1.9.16",
         "negrarosa-security-framework@1.0.0|@grpc/proto-loader@0.7.15",
         "negrarosa-security-framework@1.0.0|tslib@2.8.1"
       ]
@@ -38876,7 +38876,7 @@
       "ref": "negrarosa-security-framework@1.0.0|@firebase/webchannel-wrapper@1.0.5"
     },
     {
-      "ref": "negrarosa-security-framework@1.0.0|@grpc/grpc-js@1.9.15",
+      "ref": "negrarosa-security-framework@1.0.0|@grpc/grpc-js@1.9.16",
       "dependsOn": [
         "negrarosa-security-framework@1.0.0|@grpc/proto-loader@0.7.15",
         "negrarosa-security-framework@1.0.0|@types/node@25.5.0"
