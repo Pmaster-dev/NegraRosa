@@ -2451,9 +2451,16 @@ CSAF: ${baseUrl}/.well-known/csaf/provider-metadata.json
       }
       
       // Create webhook payload with cryptographic signature
+      // SECURITY RISK: Use environment variable WEBHOOK_SECRET or JWT_SECRET for HMAC signing to avoid hardcoded secrets.
+      const webhookSecret = process.env.WEBHOOK_SECRET || process.env.JWT_SECRET;
+      if (!webhookSecret) {
+        console.error("WEBHOOK_SECRET or JWT_SECRET is not configured");
+        return res.status(500).json({ message: "Webhook HMAC secret configuration missing" });
+      }
+
       const payloadId = uuidv4();
       const payloadString = JSON.stringify(data);
-      const signature = crypto.createHmac("sha256", "idsec_secret_salt").update(payloadString).digest("hex");
+      const signature = crypto.createHmac("sha256", webhookSecret).update(payloadString).digest("hex");
       
       const payload = {
         id: payloadId,
