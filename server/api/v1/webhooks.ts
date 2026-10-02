@@ -25,7 +25,7 @@ router.get('/', auth0Service.checkJwt, async (req: Request, res: Response) => {
     return res.json(webhooks);
   } catch (error: any) {
     console.error('Error fetching webhooks:', error);
-    return res.status(500).json({ message: 'Error fetching webhooks', error: error.message });
+    return res.status(500).json({ message: 'Error fetching webhooks' });
   }
 });
 
@@ -58,7 +58,7 @@ router.get('/:id', auth0Service.checkJwt, async (req: Request, res: Response) =>
     return res.json(webhook);
   } catch (error: any) {
     console.error('Error fetching webhook:', error);
-    return res.status(500).json({ message: 'Error fetching webhook', error: error.message });
+    return res.status(500).json({ message: 'Error fetching webhook' });
   }
 });
 
@@ -117,7 +117,7 @@ router.post('/', auth0Service.checkJwt, async (req: Request, res: Response) => {
     return res.status(201).json(webhook);
   } catch (error: any) {
     console.error('Error creating webhook:', error);
-    return res.status(500).json({ message: 'Error creating webhook', error: error.message });
+    return res.status(500).json({ message: 'Error creating webhook' });
   }
 });
 
@@ -180,7 +180,7 @@ router.put('/:id', auth0Service.checkJwt, async (req: Request, res: Response) =>
     return res.json(updatedWebhook);
   } catch (error: any) {
     console.error('Error updating webhook:', error);
-    return res.status(500).json({ message: 'Error updating webhook', error: error.message });
+    return res.status(500).json({ message: 'Error updating webhook' });
   }
 });
 
@@ -219,7 +219,7 @@ router.delete('/:id', auth0Service.checkJwt, async (req: Request, res: Response)
     return res.status(204).end();
   } catch (error: any) {
     console.error('Error deleting webhook:', error);
-    return res.status(500).json({ message: 'Error deleting webhook', error: error.message });
+    return res.status(500).json({ message: 'Error deleting webhook' });
   }
 });
 
@@ -255,7 +255,7 @@ router.get('/:id/deliveries', auth0Service.checkJwt, async (req: Request, res: R
     return res.json(deliveries);
   } catch (error: any) {
     console.error('Error fetching webhook deliveries:', error);
-    return res.status(500).json({ message: 'Error fetching webhook deliveries', error: error.message });
+    return res.status(500).json({ message: 'Error fetching webhook deliveries' });
   }
 });
 
@@ -302,7 +302,7 @@ router.post('/:id/test', auth0Service.checkJwt, async (req: Request, res: Respon
     });
   } catch (error: any) {
     console.error('Error testing webhook:', error);
-    return res.status(500).json({ message: 'Error testing webhook', error: error.message });
+    return res.status(500).json({ message: 'Error testing webhook' });
   }
 });
 
@@ -336,7 +336,7 @@ router.post('/import', auth0Service.checkJwt, async (req: Request, res: Response
     });
   } catch (error: any) {
     console.error('Error importing webhooks:', error);
-    return res.status(500).json({ message: 'Error importing webhooks', error: error.message });
+    return res.status(500).json({ message: 'Error importing webhooks' });
   }
 });
 
@@ -366,7 +366,7 @@ router.get('/export', auth0Service.checkJwt, async (req: Request, res: Response)
     return res.send(csv);
   } catch (error: any) {
     console.error('Error exporting webhooks:', error);
-    return res.status(500).json({ message: 'Error exporting webhooks', error: error.message });
+    return res.status(500).json({ message: 'Error exporting webhooks' });
   }
 });
 
@@ -452,8 +452,7 @@ router.post('/receive', async (req: Request, res: Response) => {
     console.error('Error handling external webhook:', error);
     return res.status(500).json({
       success: false,
-      message: 'Error handling webhook',
-      error: error.message
+      message: 'Error handling webhook'
     });
   }
 });
