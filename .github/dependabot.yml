@@ -1,6 +1,4 @@
-version: 2
-updates: 
-  # Enable version updates for npm
+# Enable version updates for npm
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -10,6 +8,7 @@ updates:
     open-pull-requests-limit: 10
     reviewers:
       - "pinkycollie"
+      - "github-security"
     labels:
       - "dependencies"
       - "security"
