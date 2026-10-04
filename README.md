@@ -1,5 +1,6 @@
 # NegraRosa - Inclusive Security Framework
 
+[![PR Security Review](https://github.com/pinkycollie/NegraRosa/actions/workflows/pr-security-review.yml/badge.svg)](https://github.com/pinkycollie/NegraRosa/actions/workflows/pr-security-review.yml)
 [![Security Hardening](https://github.com/pinkycollie/NegraRosa/actions/workflows/security-hardening.yml/badge.svg)](https://github.com/pinkycollie/NegraRosa/actions/workflows/security-hardening.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
