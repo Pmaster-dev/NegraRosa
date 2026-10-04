@@ -2453,7 +2453,9 @@ CSAF: ${baseUrl}/.well-known/csaf/provider-metadata.json
       // Create webhook payload with cryptographic signature
       const payloadId = uuidv4();
       const payloadString = JSON.stringify(data);
-      const signature = crypto.createHmac("sha256", "idsec_secret_salt").update(payloadString).digest("hex");
+      // Security: Use configured environment secret for HMAC signature generation to prevent secret exposure
+      const secretKey = process.env.WEBHOOK_SECRET || process.env.IDSEC_SECRET_SALT || "idsec_secret_salt";
+      const signature = crypto.createHmac("sha256", secretKey).update(payloadString).digest("hex");
       
       const payload = {
         id: payloadId,
