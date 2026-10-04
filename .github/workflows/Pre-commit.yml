@@ -1,0 +1,33 @@
+# .github/workflows/pre-commit.yml
+name: pre-commit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Cache pre-commit environments to drastically speed up CI execution
+      - name: Cache Pre-Commit Hooks
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install Pre-Commit
+        run: pip install pre-commit
+
+      # --all-files is mandatory in CI to check the full state of the PR code
+      - name: Run Pre-Commit Checks
+        run: pre-commit run --all-files --show-diff-on-failure
