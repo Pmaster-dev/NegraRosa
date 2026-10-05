@@ -1,0 +1,19 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node- name: AI Sec Linter
+  # You may pin to the exact commit or the version.
+  # uses: darrenrabbs/ai-sec-action@15452d893c5de2706b0da545c48934756feb1307
+  uses: darrenrabbs/ai-sec-action@v4
+  with:
+    # Path to the infrastructure directory to lint.
+    infra_dir: 
+    # Path to the config.yaml file. Defaults to './config/config.yaml'.
+    config_path: # optional, default is ./config/config.yaml
+    # OpenAI API token for optional insights.
+    openai_api_token: # optional, default is 
+    # Whether to fail the job on critical issues.
+    fail_on_critical: # optional, default is true
+    # Whether to fail the job on high issues.
+    fail_on_high: # optional, default is false
+    # Whether to fail the job on medium issues.
+    fail_on_medium: # optional, default is false
+    # Optional GitHub token for deploying static reports to GitHub Pages.
+    github_token: # optional, default is 
